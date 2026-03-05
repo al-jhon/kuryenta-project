@@ -17,7 +17,7 @@ import ExampleComponent from 'components/ExampleComponent.vue';
 const todos = ref<Todo[]>([
   {
     id: 1,
-    content: 'ct1',
+    content: 'ct2',
   },
   {
     id: 2,

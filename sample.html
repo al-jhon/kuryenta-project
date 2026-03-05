@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS Tracker Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; }
+        
+        #header {
+            background: #1a1a2e;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #header h1 { font-size: 1.3em; }
+        #status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+        .status-ok { background: #00b894; }
+        .status-waiting { background: #fdcb6e; color: #333; }
+        
+        #map { height: calc(100vh - 130px); width: 100%; }
+        
+        #controls {
+            background: #2d3436;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        #controls label { font-size: 0.85em; }
+        #controls input, #controls button {
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid #636e72;
+            background: #1a1a2e;
+            color: white;
+            font-size: 0.85em;
+        }
+        #controls button {
+            background: #0984e3;
+            border: none;
+            cursor: pointer;
+            padding: 8px 20px;
+        }
+        #controls button:hover { background: #74b9ff; }
+        
+        #info-box {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 1000;
+            min-width: 250px;
+            font-size: 0.9em;
+        }
+        #info-box h3 { margin-bottom: 8px; color: #74b9ff; }
+        #info-box .row { margin: 4px 0; }
+        #info-box .label { color: #b2bec3; }
+
+        /* Manual input mode */
+        #manual-input {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            width: 320px;
+        }
+        #manual-input h3 { margin-bottom: 10px; color: #00b894; }
+        #manual-input textarea {
+            width: 100%;
+            height: 120px;
+            background: #1a1a2e;
+            color: #dfe6e9;
+            border: 1px solid #636e72;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+        }
+        #manual-input button {
+            width: 100%;
+            padding: 10px;
+            background: #00b894;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+
+<div id="header">
+    <h1>📍 GPS Tracker Live Map</h1>
+    <span id="status" class="status-waiting">Waiting for data...</span>
+</div>
+
+<div id="map"></div>
+
+<div id="controls">
+    <label>Webhook URL:</label>
+    <input type="text" id="webhookUrl" 
+           placeholder="https://your-n8n.com/webhook/gps-data" 
+           style="width: 350px;">
+    <button onclick="fetchFromWebhook()">Fetch Latest</button>
+    <button onclick="toggleManualInput()">📝 Paste SMS Data</button>
+    <button onclick="startAutoRefresh()">🔄 Auto Refresh</button>
+</div>
+
+<!-- Manual SMS paste box -->
+<div id="manual-input" style="display:none;">
+    <h3>📝 Paste Raw SMS / GPS Data</h3>
+    <textarea id="raw-data" placeholder="Paste one of these formats:
+
+Format 1 (Tracker SMS):
+TRACKER|TRACKER-001|14.5995|120.9842|0.0|15.3|8
+
+Format 2 (Raw NMEA):
+$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,47.0,M,,*47
+
+Format 3 (Simple coordinates):
+14.5995, 120.9842"></textarea>
+    <button onclick="parseAndPlot()">📍 Plot on Map</button>
+</div>
+
+<!-- Info overlay -->
+<div id="info-box">
+    <h3>Last Position</h3>
+    <div class="row"><span class="label">Lat:</span> <span id="i-lat">—</span></div>
+    <div class="row"><span class="label">Lng:</span> <span id="i-lng">—</span></div>
+    <div class="row"><span class="label">Speed:</span> <span id="i-speed">—</span></div>
+    <div class="row"><span class="label">Sats:</span> <span id="i-sats">—</span></div>
+    <div class="row"><span class="label">Time:</span> <span id="i-time">—</span></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Initialize map
+    const map = L.map('map').setView([14.5995, 120.9842], 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marker = null;
+    let pathLine = null;
+    let pathPoints = [];
+    let autoRefreshInterval = null;
+
+    // Custom icon
+    const trackerIcon = L.divIcon({
+        html: `<div style="
+            background: #e74c3c;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        "></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+        className: ''
+    });
+
+    // ---- PLOT A POINT ON THE MAP ----
+    function plotLocation(lat, lng, speed, sats, time) {
+        lat = parseFloat(lat);
+        lng = parseFloat(lng);
+        
+        if (isNaN(lat) || isNaN(lng)) {
+            alert("Invalid coordinates!");
+            return;
+        }
+
+        // Update marker
+        if (marker) map.removeLayer(marker);
+        marker = L.marker([lat, lng], { icon: trackerIcon })
+            .addTo(map)
+            .bindPopup(`
+                <b>📍 Tracker Position</b><br>
+                Lat: ${lat}<br>
+                Lng: ${lng}<br>
+                Speed: ${speed || '?'} km/h<br>
+                Time: ${time || new Date().toLocaleString()}
+            `)
+            .openPopup();
+
+        // Add to path
+        pathPoints.push([lat, lng]);
+        if (pathLine) map.removeLayer(pathLine);
+        if (pathPoints.length > 1) {
+            pathLine = L.polyline(pathPoints, {
+                color: '#0984e3',
+                weight: 3,
+                opacity: 0.8
+            }).addTo(map);
+        }
+
+        // Center map
+        map.setView([lat, lng], map.getZoom());
+
+        // Update info box
+        document.getElementById('i-lat').textContent = lat.toFixed(6);
+        document.getElementById('i-lng').textContent = lng.toFixed(6);
+        document.getElementById('i-speed').textContent = (speed || '—') + ' km/h';
+        document.getElementById('i-sats').textContent = sats || '—';
+        document.getElementById('i-time').textContent = time || new Date().toLocaleString();
+
+        // Update status
+        const statusEl = document.getElementById('status');
+        statusEl.textContent = `Live • ${new Date().toLocaleTimeString()}`;
+        statusEl.className = 'status-ok';
+    }
+
+    // ---- PARSE RAW DATA (SMS / NMEA / Simple) ----
+    function parseAndPlot() {
+        const raw = document.getElementById('raw-data').value.trim();
+        
+        if (!raw) {
+            alert("Please paste some GPS data!");
+            return;
+        }
+
+        let lat, lng, speed, sats;
+
+        // Format 1: TRACKER|ID|lat|lng|speed|alt|sats
+        if (raw.startsWith("TRACKER|") || raw.includes("|")) {
+            const parts = raw.split("|");
+            // find the parts that look like coordinates
+            for (let i = 0; i < parts.length; i++) {
+                const val = parseFloat(parts[i]);
+                if (!isNaN(val) && Math.abs(val) <= 90 && lat === undefined) {
+                    lat = val;
+                } else if (!isNaN(val) && Math.abs(val) <= 180 && lat !== undefined && lng === undefined) {
+                    lng = val;
+                } else if (!isNaN(val) && lat !== undefined && lng !== undefined && speed === undefined) {
+                    speed = val;
+                }
+            }
+            // Better: use fixed positions
+            if (parts.length >= 4) {
+                lat = parseFloat(parts[2]) || lat;
+                lng = parseFloat(parts[3]) || lng;
+                speed = parseFloat(parts[4]) || 0;
+                sats = parseInt(parts[6]) || 0;
+            }
+        }
+        // Format 2: NMEA $GPGGA sentence
+        else if (raw.startsWith("$GPGGA") || raw.startsWith("$GPRMC")) {
+            const result = parseNMEA(raw);
+            lat = result.lat;
+            lng = result.lng;
+        }
+        // Format 3: Simple "lat, lng" or "lat lng"
+        else {
+            const nums = raw.match(/-?\d+\.?\d*/g);
+            if (nums && nums.length >= 2) {
+                lat = parseFloat(nums[0]);
+                lng = parseFloat(nums[1]);
+            }
+        }
+
+        if (lat && lng) {
+            plotLocation(lat, lng, speed, sats);
+            document.getElementById('manual-input').style.display = 'none';
+        } else {
+            alert("Could not parse coordinates from the data!");
+        }
+    }
+
+    // ---- PARSE NMEA ----
+    function parseNMEA(sentence) {
+        const parts = sentence.split(",");
+        let lat, lng;
+
+        if (sentence.startsWith("$GPGGA") && parts.length >= 6) {
+            // $GPGGA,time,lat,N/S,lng,E/W,...
+            lat = nmeaToDecimal(parts[2], parts[3]);
+            lng = nmeaToDecimal(parts[4], parts[5]);
+        } else if (sentence.startsWith("$GPRMC") && parts.length >= 6) {
+            // $GPRMC,time,status,lat,N/S,lng,E/W,...
+            lat = nmeaToDecimal(parts[3], parts[4]);
+            lng = nmeaToDecimal(parts[5], parts[6]);
+        }
+        return { lat, lng };
+    }
+
+    function nmeaToDecimal(coord, dir) {
+        if (!coord) return null;
+        // NMEA format: DDMM.MMMM or DDDMM.MMMM
+        const dotPos = coord.indexOf('.');
+        const degLen = dotPos - 2;
+        const degrees = parseFloat(coord.substring(0, degLen));
+        const minutes = parseFloat(coord.substring(degLen));
+        let decimal = degrees + (minutes / 60);
+        if (dir === 'S' || dir === 'W') decimal *= -1;
+        return decimal;
+    }
+
+    // ---- FETCH FROM n8n WEBHOOK ----
+    async function fetchFromWebhook() {
+        const url = document.getElementById('webhookUrl').value;
+        if (!url) {
+            alert("Enter your n8n webhook URL first!");
+            return;
+        }
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            // Handle various response formats
+            const d = Array.isArray(data) ? data[data.length - 1] : data;
+            plotLocation(d.lat, d.lng, d.speed, d.satellites, d.timestamp);
+        } catch (err) {
+            alert("Error fetching: " + err.message);
+        }
+    }
+
+    // ---- AUTO REFRESH ----
+    function startAutoRefresh() {
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+            alert("Auto refresh stopped");
+            return;
+        }
+        autoRefreshInterval = setInterval(fetchFromWebhook, 30000);
+        fetchFromWebhook();
+        alert("Auto refresh every 30s. Click again to stop.");
+    }
+
+    function toggleManualInput() {
+        const el = document.getElementById('manual-input');
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+</script>
+</body>
+</html>

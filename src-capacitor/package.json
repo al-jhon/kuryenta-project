@@ -1,0 +1,13 @@
+{
+  "name": "kuryenta-project",
+  "version": "0.0.1",
+  "description": "a kuryenta project",
+  "author": "@ljhon <mangmang.aljhon26@gmail.com>",
+  "private": true,
+  "dependencies": {
+    "@capacitor/android": "^7.5.0",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0"
+  }
+}
