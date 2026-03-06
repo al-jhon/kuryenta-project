@@ -18,11 +18,19 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
-    path: '/logInScreen',component: () => import('src/features/logInPage/LogInScreen.vue'),
+    path: '/logInScreen',
+    component: () => import('src/features/logInPage/LogInScreen.vue'),
   },
 
   {
-    path: '/homeScreen',component: () => import('src/features/homePage/HomeScreen.vue'),
+    path: '/mainScreen',
+    component: () => import('src/features/homePage/MainScreen.vue'),
+    children: [
+      {
+        path: '',
+        component: () => import('src/components/HomeScreen.vue'),
+      },
+    ],
   },
 
   // Always leave this as last one,

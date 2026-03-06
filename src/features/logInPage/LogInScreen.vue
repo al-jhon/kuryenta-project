@@ -42,10 +42,17 @@ const router = useRouter();
 import { onMounted } from 'vue';
 
 const logIn = async (): Promise<void> => {
-  await router.replace('homeScreen').catch((error) => {
-    console.error('Error navigating to log in screen:', error);
+  // ✅ Save login state BEFORE navigating
+  localStorage.setItem('isAuthenticated', 'true');
+
+  await router.replace('/mainScreen').catch((error) => {
+    console.error('Error navigating:', error);
   });
 };
+
+// const logIn = (): void => {
+//   window.location.replace('/#/homeScreen');
+// };
 
 onMounted(() => {
   const eye = document.getElementById('eye') as HTMLImageElement;

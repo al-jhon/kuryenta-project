@@ -33,5 +33,21 @@ export default defineRouter(function (/* { store, ssrContext } */) {
     history: createHistory(process.env.VUE_ROUTER_BASE),
   });
 
+  // 👇 Add this block
+  Router.beforeEach((to, from, next) => {
+    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
+    // Pages that logged-in users should NEVER go back to
+    const authPages = ['/', '/welcomeScreen', '/logInScreen'];
+
+    if (isAuthenticated && authPages.includes(to.path)) {
+      // 🚫 Redirect to home
+      next({ path: '/mainScreen', replace: true });
+    } else {
+      // ✅ Allow navigation
+      next();
+    }
+  });
+
   return Router;
 });
