@@ -1,6 +1,9 @@
-/* Screen.css */
 .body {
+  display: flex;
+  flex-direction: column;
   height: 100dvh;
   width: 100dvw;
   background-color: #DEEEF7;
+  overflow: hidden;         
+   /* body itself never scrolls */
 }
