@@ -1,0 +1,36 @@
+/* Header.css */
+.header {
+  display: flex;
+  padding-top: 50px;
+  padding-left: 20px;
+  padding-right: 20px;
+  /* background-color: transparent; */
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile {
+  object-fit: cover;
+  height: 54px;
+  width: 54px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.kuryenta-logo {
+  height: 90px;
+  width: 90px;
+  vertical-align: middle;
+}
+
+.left-section {
+  margin-right: 10px;
+}
+
+.middle-section {
+  flex: 1;
+}
+
+p {
+  margin: 0;
+}
