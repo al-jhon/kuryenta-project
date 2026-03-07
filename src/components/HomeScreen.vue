@@ -19,7 +19,20 @@
     </div>
 
     <div class="main-page">
-      
+      <div class="search-container">
+        <input class="input-field" type="text" placeholder="Station ID" />
+        <img class="search-icon" src="src/assets/search-icon.png" alt="" />
+      </div>
+      <div class="credit-container">
+        <div class="icons">
+          <img src="src/assets/credit-icon.png" alt="" />
+          <p class="credit-points">Credit Points</p>
+        </div>
+        <div class="credit-value">
+          <img src="src/assets/peso-icon.png" alt="" />
+          <p>100000</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -27,3 +40,4 @@
 <script setup lang="ts"></script>
 
 <style src="src/features/homePage/Header.css"></style>
+<style src="src/features/homePage/MainPage.css"></style>

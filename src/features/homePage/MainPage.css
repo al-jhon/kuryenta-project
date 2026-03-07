@@ -1,0 +1,90 @@
+/* MainPage.css */
+
+/* ── main content area ── */
+.main-page {
+  flex: 1; /* fills all space between header & footer */
+  /* background-color: yellow; */
+  margin-bottom: 84px; /* ends exactly at the footer's top edge */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.search-container {
+  margin-top: 38px;
+  position: relative;
+  /* background-color: yellow; */
+}
+
+.search-container input {
+  width: 200px;
+  font-size: 18px;
+  padding: 10px 20px;
+  border-radius: 25px;
+  border: none;
+  box-shadow: 0px 2px 5x rgba(0, 0, 0, 0.2);
+  transition: 0.4s ease-in-out;
+}
+
+.search-container input:focus {
+  width: 350px;
+}
+
+.search-container img {
+  position: absolute;
+  top: 35%;
+  right: 20px;
+  /* transform: translateY(-50%); */
+  cursor: pointer;
+}
+
+.search-icon {
+  height: 18px;
+  width: 18px;
+}
+
+.credit-container {
+  border-radius: 25px;
+  margin-top: 36px;
+  width: 300px;
+  height: 100px;
+  background: #0e255c;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.credit-container p {
+  margin-bottom: 0;
+  margin-top: 0;
+  color: white;
+}
+
+.icons {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-left: 20px;
+}
+
+.credit-container img {
+  height: 70px;
+  /* vertical-align: middle; */
+}
+
+.credit-value {
+  margin-right: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.credit-value img {
+  height: 25px;
+}
+
+.credit-value p {
+  font-weight: 400;
+  font-size: 20px;
+}
