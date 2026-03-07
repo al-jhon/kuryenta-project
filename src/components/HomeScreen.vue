@@ -19,7 +19,13 @@
     </div>
 
     <div class="main-page">
-      
+      <div class="search-container">
+        <input class="input-field" type="text" placeholder="Station ID" />
+        <img class="search-icon" src="src/assets/search-icon.png" alt="" />
+      </div>
+      <div>
+        this is the div
+      </div>
     </div>
   </div>
 </template>
@@ -27,3 +33,4 @@
 <script setup lang="ts"></script>
 
 <style src="src/features/homePage/Header.css"></style>
+<style src="src/features/homePage/MainPage.css"></style>

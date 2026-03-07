@@ -45,10 +45,3 @@
 p {
   margin: 0;
 }
-
-/* ── main content area ── */
-.main-page {
-  flex: 1;                   /* fills all space between header & footer */
-  /* background-color: yellow; */
-  margin-bottom: 84px;       /* ends exactly at the footer's top edge */
-}
