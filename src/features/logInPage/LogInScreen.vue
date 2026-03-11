@@ -3,6 +3,11 @@
   <q-layout view="lHh Lpr lFf">
     <q-page-container>
       <div class="background">
+        <!-- BACK BUTTON -->
+        <button class="back-button" @click="goBack">
+          <span class="back-arrow"></span>
+        </button>
+
         <img class="image-logo" src="src/assets/Kuryenta_logo.png" alt="" />
         <div class="div-container">
           <div class="first-container">
@@ -12,62 +17,62 @@
           </div>
           <div class="second-container">
             <div class="input-group">
-              <label class="label">Email address</label>
-              <input autocomplete="off" name="Email" id="Email" class="input" type="email" />
+              <label class="label" for="email">Email address</label>
+              <input
+                v-model="email"
+                autocomplete="email"
+                name="email"
+                id="email"
+                class="input"
+                type="email"
+              />
             </div>
             <div class="input-group-password">
-              <label class="label">Password</label>
+              <label class="label" for="password">Password</label>
               <input
-                autocomplete="off"
-                name="Password"
-                id="Password"
+                v-model="password"
+                autocomplete="current-password"
+                name="password"
+                id="password"
                 class="input"
-                type="password"
+                :type="showPassword ? 'text' : 'password'"
               />
-              <img class="eye" id="eye" src="src/assets/eye-close.png" alt="eye-close" />
+              <img
+                class="eye"
+                :src="showPassword ? 'src/assets/eye-open.png' : 'src/assets/eye-close.png'"
+                :alt="showPassword ? 'Hide password' : 'Show password'"
+                @click="showPassword = !showPassword"
+              />
               <p class="forgot-password">Forgot Password?</p>
             </div>
             <button @click="logIn">Log In</button>
           </div>
         </div>
-        <router-view />
       </div>
     </q-page-container>
   </q-layout>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+
 const router = useRouter();
-import { onMounted } from 'vue';
+
+const email = ref('');
+const password = ref('');
+const showPassword = ref(false);
+
+const goBack = (): void => {
+  router.back();
+};
 
 const logIn = async (): Promise<void> => {
-  // ✅ Save login state BEFORE navigating
   localStorage.setItem('isAuthenticated', 'true');
-
   await router.replace('/mainScreen').catch((error) => {
     console.error('Error navigating:', error);
   });
 };
-
-// const logIn = (): void => {
-//   window.location.replace('/#/homeScreen');
-// };
-
-onMounted(() => {
-  const eye = document.getElementById('eye') as HTMLImageElement;
-  const password = document.getElementById('Password') as HTMLInputElement;
-
-  eye?.addEventListener('click', function () {
-    if (password.type === 'password') {
-      password.type = 'text';
-      eye.src = 'src/assets/eye-open.png';
-    } else {
-      password.type = 'password';
-      eye.src = 'src/assets/eye-close.png';
-    }
-  });
-});
 </script>
 
-<style lang="css" src="src/features/LogInPage/LogInScreen.css" />
+<style scoped lang="css" src="src/features/logInPage/LogInScreen.css" />

@@ -1,0 +1,235 @@
+/* SignUpScreenThird.css */
+
+.background {
+  display: flex;
+  min-height: 100dvh;
+  background-color: #deeef7;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.image-logo {
+  margin-top: 45px;
+  height: 23.8vh;
+  object-fit: contain;
+  max-height: 300px;
+  max-width: 300px;
+  min-height: 200px;
+  min-width: 200px;
+}
+
+.div-container {
+  display: flex;
+  flex-direction: column;
+  margin-top: 5px;
+  width: 90dvw;
+  background-color: white;
+  border-radius: 25px;
+  max-width: 400px;
+  min-width: 300px;
+  align-items: center;
+  padding: 30px 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* ──────── PROFILE SECTION ──────── */
+.profile-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.avatar-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #e8e8e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.avatar-icon {
+  width: 50px;
+  height: 50px;
+}
+
+.verified-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.verified-badge svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ──────── INFO TEXT ──────── */
+.info-section {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.info-text {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.6;
+  text-align: left;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.email-link {
+  color: #4a90d9;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.email-link:hover {
+  text-decoration: underline;
+}
+
+/* ──────── CONSENT CHECKBOX ──────── */
+.consent-section {
+  width: 100%;
+  margin-bottom: 25px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-input {
+  display: none;
+}
+
+.checkbox-custom {
+  min-width: 22px;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
+  margin-top: 2px;
+}
+
+.checkbox-input:checked ~ .checkbox-custom,
+.checkbox-label:has(.checkbox-input:checked) .checkbox-custom {
+  background-color: #0e255c;
+  border-color: #0e255c;
+}
+
+.check-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.checkbox-text {
+  font-size: 12.5px;
+  color: #555;
+  line-height: 1.6;
+  font-family: 'Poppins', sans-serif;
+}
+
+.link {
+  color: #4a90d9;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* ──────── CREATE ACCOUNT BUTTON ──────── */
+.create-account-btn {
+  width: 213px;
+  height: 54px;
+  background-color: #0e255c;
+  color: white;
+  border-radius: 30px;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  transition:
+    background-color 0.2s,
+    opacity 0.2s;
+  margin-top: 5px;
+}
+
+.create-account-btn:active {
+  background-color: #091a45;
+}
+
+.create-account-btn.disabled {
+  background-color: #a0a0a0;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+
+
+
+
+   /* back-button.css */
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.2s, transform 0.2s;
+  z-index: 10;
+}
+
+.back-button:active {
+  background-color: rgba(255, 255, 255, 1);
+  transform: scale(0.92);
+}
+
+.back-arrow {
+  width: 10px;
+  height: 10px;
+  border: none;
+  border-left: 3px solid #0e255c;
+  border-bottom: 3px solid #0e255c;
+  transform: rotate(45deg);
+  margin: -3px;
+}
