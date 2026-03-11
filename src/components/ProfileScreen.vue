@@ -1,4 +1,4 @@
-<!-- ProfileScreen.vue -->
+<!-- src\components\ProfileScreen.vuee -->
 <template>
   <button style="margin-top: 100px;" @click="logOut">
     this is the button log out

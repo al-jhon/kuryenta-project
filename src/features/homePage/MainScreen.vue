@@ -1,4 +1,4 @@
-<!-- MainScreen.vue -->
+<!-- src\features\homePage\MainScreen.vue -->
 <template>
   <div class="body">
     <router-view />

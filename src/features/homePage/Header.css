@@ -1,4 +1,4 @@
-/* ── scrollable page wrapper ── */
+/* ── src\features\homePage\Header.css ── */
 .home-container {
   flex: 1;                   /* fill everything above the fixed footer */
   display: flex;

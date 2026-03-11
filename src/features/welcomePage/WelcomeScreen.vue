@@ -1,4 +1,4 @@
-<!-- WelcomScreen.vue -->
+<!--src\features\welcomePage\WelcomeScreen.vue -->
 <template>
   <q-layout view="lHh Lpr lFf">
     <q-page-container>

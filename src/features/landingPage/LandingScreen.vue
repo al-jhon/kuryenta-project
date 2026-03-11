@@ -1,4 +1,4 @@
-<!-- LandingScreen.vue -->
+<!-- src\features\landingPage\LandingScreen.vue -->
 <template>
   <q-layout view="lHh Lpr lFf">
     <q-page-container>

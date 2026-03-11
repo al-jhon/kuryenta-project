@@ -1,4 +1,4 @@
-<!-- SignUpScreenSecond.vue -->
+<!-- src\features\signUpPage\SignUpScreenSecond.vue -->
 <template>
   <q-layout view="lHh Lpr lFf">
     <q-page-container>

@@ -1,4 +1,4 @@
-<!-- HomeScreen -->
+<!-- src\components\HomeScreen.vue -->
 <template>
   <div class="home-container">
     <div class="header">

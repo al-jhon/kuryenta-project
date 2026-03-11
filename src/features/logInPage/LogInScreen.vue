@@ -1,4 +1,4 @@
-<!-- LogInScreen.vue -->
+<!-- src\features\logInPage\LogInScreen.vue -->
 <template>
   <q-layout view="lHh Lpr lFf">
     <q-page-container>
