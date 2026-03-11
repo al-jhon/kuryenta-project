@@ -1,4 +1,4 @@
-<!-- HomeScreen -->
+<!-- src\components\HomeScreen.vue -->
 <template>
   <div class="home-container">
     <div class="header">
@@ -39,5 +39,5 @@
 
 <script setup lang="ts"></script>
 
-<style src="src/features/homePage/Header.css"></style>
-<style src="src/features/homePage/MainPage.css"></style>
+<style scoped src="src/features/homePage/Header.css"></style>
+<style scoped src="src/features/homePage/MainPage.css"></style>

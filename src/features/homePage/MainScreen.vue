@@ -1,50 +1,45 @@
-<!-- MainScreen.vue -->
+<!-- src\features\homePage\MainScreen.vue -->
 <template>
   <div class="body">
     <router-view />
 
     <div class="footer">
-      <div class="footer-item" :class="{ active: activeTab === 'home' }" @click="setActive('home')">
-        <div class="icon-bubble">
-          <img class="footer-icon" src="src/assets/home.png" alt="home" />
+      <!-- HOME -->
+      <router-link :to="{ name: 'home' }" custom v-slot="{ navigate, isExactActive }">
+        <div class="footer-item" :class="{ active: isExactActive }" @click="navigate">
+          <div class="icon-bubble">
+            <img class="footer-icon" src="src/assets/home.png" alt="home" />
+          </div>
+          <span class="footer-label">Home</span>
         </div>
-        <span class="footer-label">Home</span>
-      </div>
+      </router-link>
 
-      <div
-        class="footer-item"
-        :class="{ active: activeTab === 'notification' }"
-        @click="setActive('notification')"
-      >
+      <!-- NOTIFICATIONS (no route yet — stays as plain div) -->
+      <div class="footer-item" @click="onNotificationClick">
         <div class="icon-bubble">
           <img class="footer-icon" src="src/assets/notification.png" alt="notification" />
         </div>
         <span class="footer-label">Alerts</span>
       </div>
 
-      <div
-        class="footer-item"
-        :class="{ active: activeTab === 'profile' }"
-        @click="setActive('profile')"
-      >
-        <div class="icon-bubble">
-          <img class="footer-icon" src="src/assets/user-icon.png" alt="profile" />
+      <!-- PROFILE -->
+      <router-link :to="{ name: 'profile' }" custom v-slot="{ navigate, isExactActive }">
+        <div class="footer-item" :class="{ active: isExactActive }" @click="navigate">
+          <div class="icon-bubble">
+            <img class="footer-icon" src="src/assets/user-icon.png" alt="profile" />
+          </div>
+          <span class="footer-label">Profile</span>
         </div>
-        <span class="footer-label">Profile</span>
-      </div>
+      </router-link>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-
-const activeTab = ref<string>('home');
-
-const setActive = (tab: string): void => {
-  activeTab.value = tab;
+const onNotificationClick = () => {
+  // TODO: wire up when notification route is ready
 };
 </script>
 
-<style src="src/features/homePage/Footer.css"></style>
-<style src="src/features/homePage/Screen.css"></style>
+<style scoped src="src/features/homePage/Footer.css"></style>
+<style scoped src="src/features/homePage/Screen.css"></style>

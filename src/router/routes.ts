@@ -19,7 +19,27 @@ const routes: RouteRecordRaw[] = [
 
   {
     path: '/logInScreen',
+    name: 'logInScreen',
     component: () => import('src/features/logInPage/LogInScreen.vue'),
+  },
+
+  {
+    path: '/signUpScreen',
+    name: 'signUpScreen',
+    component: () => import('src/features/signUpPage/SignUpScreen.vue'),
+  },
+
+  {
+    path: '/signUpScreenSecond',
+    name: 'signUpScreenSecond',
+    component: () => import('src/features/signUpPage/SignUpScreenSecond.vue'),
+  },
+
+  // ✅ NEW — Consent page
+  {
+    path: '/signUpScreenThird',
+    name: 'signUpScreenThird',
+    component: () => import('src/features/signUpPage/SignUpScreenThird.vue'),
   },
 
   {
@@ -28,13 +48,17 @@ const routes: RouteRecordRaw[] = [
     children: [
       {
         path: '',
+        name: 'home',
         component: () => import('src/components/HomeScreen.vue'),
+      },
+      {
+        path: 'profileScreen',
+        name: 'profile',
+        component: () => import('src/components/ProfileScreen.vue'),
       },
     ],
   },
 
-  // Always leave this as last one,
-  // but you can also remove it
   {
     path: '/:catchAll(.*)*',
     component: () => import('pages/ErrorNotFound.vue'),
