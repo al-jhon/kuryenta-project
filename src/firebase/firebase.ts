@@ -3,14 +3,14 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// ✅ REPLACE these with YOUR values from Firebase Console
+// ✅ Read from environment variables — NOT hardcoded
 const firebaseConfig = {
-  apiKey: "AIzaSyClYOuFHBd0u8ODoEIoUw6dS1E_ZFiV-I8",
-  authDomain: "kuryenta-4f343.firebaseapp.com",
-  projectId: "kuryenta-4f343",
-  storageBucket: "kuryenta-4f343.firebasestorage.app",
-  messagingSenderId: "996087207944",
-  appId: "1:996087207944:web:1109fa1db451dd492499bd"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
