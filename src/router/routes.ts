@@ -1,3 +1,4 @@
+// src/router/routes.ts
 import type { RouteRecordRaw } from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
@@ -35,7 +36,6 @@ const routes: RouteRecordRaw[] = [
     component: () => import('src/features/signUpPage/SignUpScreenSecond.vue'),
   },
 
-  // ✅ NEW — Consent page
   {
     path: '/signUpScreenThird',
     name: 'signUpScreenThird',
@@ -55,6 +55,12 @@ const routes: RouteRecordRaw[] = [
         path: 'profileScreen',
         name: 'profile',
         component: () => import('src/components/ProfileScreen.vue'),
+      },
+      // ✅ NEW — Station page (nested under mainScreen for footer)
+      {
+        path: 'station/:stationId',
+        name: 'stationScreen',
+        component: () => import('src/components/StationScreen.vue'),
       },
     ],
   },
