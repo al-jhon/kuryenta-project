@@ -9,7 +9,6 @@ const signUpData = reactive({
   email: '',
   password: '',
   confirmPassword: '',
-  isPhoneVerified: false, // ✅ NEW
 
   // Page 2
   sex: '',
@@ -17,6 +16,9 @@ const signUpData = reactive({
   province: '',
   municipality: '',
   barangay: '',
+
+  // Page 3 — Face photo
+  profilePictureUrl: '', // ✅ Cloudinary URL
 });
 
 const resetSignUpData = (): void => {
@@ -26,12 +28,12 @@ const resetSignUpData = (): void => {
   signUpData.email = '';
   signUpData.password = '';
   signUpData.confirmPassword = '';
-  signUpData.isPhoneVerified = false; // ✅ NEW
   signUpData.sex = '';
   signUpData.birthdate = '';
   signUpData.province = '';
   signUpData.municipality = '';
   signUpData.barangay = '';
+  signUpData.profilePictureUrl = '';
 };
 
 export { signUpData, resetSignUpData };
