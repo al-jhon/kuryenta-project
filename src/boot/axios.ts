@@ -1,3 +1,4 @@
+// src\boot\axios.ts
 import { defineBoot } from '#q-app/wrappers';
 import axios, { type AxiosInstance } from 'axios';
 
