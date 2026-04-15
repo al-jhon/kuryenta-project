@@ -159,6 +159,30 @@ export const listenToCoinSlot = (
 // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 // SLOT PENDING LOCK
 // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+// Add this to realtimeService.ts
+export const clearStalePendingSlots = async (stationId: string): Promise<void> => {
+  const THREE_MINUTES = 3 * 60 * 1000;
+  const now = Date.now();
+  const slots = ['slot1', 'slot2'] as const;
+
+  for (const slotName of slots) {
+    const slotRef = ref(rtdb, `stations/${stationId}/${slotName}`);
+    const snapshot = await get(slotRef);
+    const slot = snapshot.val() as SlotData;
+
+    if (slot?.status === 'pending' && slot?.pendingSince) {
+      const age = now - new Date(slot.pendingSince).getTime();
+      if (age >= THREE_MINUTES) {
+        await update(slotRef, {
+          status: 'available',
+          pendingBy: '',
+          pendingSince: '',
+        });
+      }
+    }
+  }
+};
+
 export const lockSlotForPayment = async (
   stationId: string,
   slotName: string,
@@ -168,8 +192,18 @@ export const lockSlotForPayment = async (
   const snapshot = await get(slotRef);
   const slot = snapshot.val() as SlotData;
 
-  // If already locked or not available, reject
-  if (slot.status !== 'available') return false;
+  if (slot.status === 'pending') {
+    // Auto-expire stale locks older than 3 minutes
+    const pendingAge = slot.pendingSince
+      ? Date.now() - new Date(slot.pendingSince).getTime()
+      : Infinity;
+    if (pendingAge < 3 * 60 * 1000) {
+      return false; // still fresh, another user has it
+    }
+    // Stale lock — fall through and overwrite it
+  } else if (slot.status !== 'available') {
+    return false;
+  }
 
   await update(slotRef, {
     status: 'pending',

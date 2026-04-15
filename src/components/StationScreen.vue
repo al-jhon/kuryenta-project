@@ -18,9 +18,8 @@
     <div v-if="activeRental && !isUserBanned" class="active-rental-notice">
       <p>You have an active rental!</p>
       <p class="rental-detail">
-        Station {{ activeRental.stationId }} •
-        {{ activeRental.slotName }} •
-        Return by {{ formatDate(activeRental.returnBy) }}
+        Station {{ activeRental.stationId }} • {{ activeRental.slotName }} • Return by
+        {{ formatDate(activeRental.returnBy) }}
       </p>
     </div>
 
@@ -28,15 +27,19 @@
     <div v-if="station" class="station-content">
       <p class="station-place">{{ station.place }}</p>
       <div class="slots-container">
-
         <!-- SLOT 1 -->
-        <div class="slot-card" :class="station.slot1.status"
-          @click="selectSlot('slot1', station.slot1)">
+        <div
+          class="slot-card"
+          :class="station.slot1.status"
+          @click="selectSlot('slot1', station.slot1)"
+        >
           <h3>Slot 1</h3>
           <div class="battery-bar">
-            <div class="battery-fill"
+            <div
+              class="battery-fill"
               :style="{ width: station.slot1.batteryPercent + '%' }"
-              :class="getBatteryColor(station.slot1.batteryPercent)"></div>
+              :class="getBatteryColor(station.slot1.batteryPercent)"
+            ></div>
           </div>
           <p class="battery-text">{{ station.slot1.batteryPercent }}%</p>
           <p class="slot-price">P{{ station.slot1.price }}</p>
@@ -49,13 +52,18 @@
         </div>
 
         <!-- SLOT 2 -->
-        <div class="slot-card" :class="station.slot2.status"
-          @click="selectSlot('slot2', station.slot2)">
+        <div
+          class="slot-card"
+          :class="station.slot2.status"
+          @click="selectSlot('slot2', station.slot2)"
+        >
           <h3>Slot 2</h3>
           <div class="battery-bar">
-            <div class="battery-fill"
+            <div
+              class="battery-fill"
               :style="{ width: station.slot2.batteryPercent + '%' }"
-              :class="getBatteryColor(station.slot2.batteryPercent)"></div>
+              :class="getBatteryColor(station.slot2.batteryPercent)"
+            ></div>
           </div>
           <p class="battery-text">{{ station.slot2.batteryPercent }}%</p>
           <p class="slot-price">P{{ station.slot2.price }}</p>
@@ -66,7 +74,6 @@
             {{ station.slot2.rentedByName || 'Rented' }}
           </p>
         </div>
-
       </div>
     </div>
 
@@ -82,9 +89,7 @@
           <p>Return within: 12 hours</p>
         </div>
         <div class="payment-buttons">
-          <button class="pay-btn coin-btn" @click="startCoinPayment">
-            Pay via Coin Slot
-          </button>
+          <button class="pay-btn coin-btn" @click="startCoinPayment">Pay via Coin Slot</button>
           <button class="pay-btn credit-btn" @click="startCreditPayment">
             Pay via Credit Points (P{{ userCredits }} available)
           </button>
@@ -108,9 +113,11 @@
           </p>
         </div>
         <div class="coin-progress-bar">
-          <div class="coin-progress-fill"
+          <div
+            class="coin-progress-fill"
             :style="{ width: Math.min((liveCoinAmount / paymentPrice) * 100, 100) + '%' }"
-            :class="{ sufficient: liveCoinAmount >= paymentPrice }"></div>
+            :class="{ sufficient: liveCoinAmount >= paymentPrice }"
+          ></div>
         </div>
         <p v-if="liveCoinAmount < paymentPrice" class="coin-status">
           Insert P{{ paymentPrice - liveCoinAmount }} more...
@@ -121,9 +128,12 @@
             (P{{ liveCoinAmount - paymentPrice }} change to credit points)
           </span>
         </p>
-        <button class="done-btn" :class="{ active: liveCoinAmount >= paymentPrice }"
+        <button
+          class="done-btn"
+          :class="{ active: liveCoinAmount >= paymentPrice }"
           :disabled="liveCoinAmount < paymentPrice || isProcessing"
-          @click="finishCoinPayment">
+          @click="finishCoinPayment"
+        >
           {{ isProcessing ? 'Processing...' : 'Done Paying' }}
         </button>
         <button class="cancel-btn" @click="cancelPayment">Cancel Payment</button>
@@ -150,9 +160,12 @@
         <p v-if="paymentMessage" class="payment-message" :class="paymentMessageType">
           {{ paymentMessage }}
         </p>
-        <button class="done-btn" :class="{ active: userCredits >= paymentPrice }"
+        <button
+          class="done-btn"
+          :class="{ active: userCredits >= paymentPrice }"
           :disabled="userCredits < paymentPrice || isProcessing"
-          @click="confirmCreditPayment">
+          @click="confirmCreditPayment"
+        >
           {{ isProcessing ? 'Processing...' : 'Confirm Payment' }}
         </button>
         <button class="cancel-btn" @click="closeCreditPayment">Cancel</button>
@@ -162,234 +175,282 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { auth } from 'src/firebase/firebase'
-import { getUserData } from 'src/firebase/authService'
+import { ref, onMounted, onUnmounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { auth } from 'src/firebase/firebase';
+import { getUserData } from 'src/firebase/authService';
 import {
-  listenToStation, listenToCoinSlot, listenToCreditPoints,
-  listenToActiveRental, startCoinSlotPayment, finishCoinSlotPayment,
-  cancelCoinSlotPayment, payWithCreditPoints, checkIfBanned,
-  lockSlotForPayment, unlockSlotFromPayment,
-  type StationData, type SlotData, type ActiveRental,
-} from 'src/firebase/realtimeService'
-import type { Unsubscribe } from 'firebase/database'
+  clearStalePendingSlots,
+  listenToStation,
+  listenToCoinSlot,
+  listenToCreditPoints,
+  listenToActiveRental,
+  startCoinSlotPayment,
+  finishCoinSlotPayment,
+  cancelCoinSlotPayment,
+  payWithCreditPoints,
+  checkIfBanned,
+  lockSlotForPayment,
+  unlockSlotFromPayment,
+  type StationData,
+  type SlotData,
+  type ActiveRental,
+} from 'src/firebase/realtimeService';
+import type { Unsubscribe } from 'firebase/database';
 
-const route = useRoute()
-const router = useRouter()
-const stationId = route.params.stationId as string
+const route = useRoute();
+const router = useRouter();
+const stationId = route.params.stationId as string;
 
-const station = ref<StationData | null>(null)
-const isUserBanned = ref(false)
-const activeRental = ref<ActiveRental | null>(null)
-const currentRenterName = ref('')
-const currentRenterPhone = ref('')
-const currentProfilePictureUrl = ref('')
-const selectedSlot = ref<SlotData | null>(null)
-const selectedSlotName = ref('')
-const isCoinPaymentActive = ref(false)
-const liveCoinAmount = ref(0)
-const paymentPrice = ref(0)
-const isProcessing = ref(false)
-const isCreditPaymentActive = ref(false)
-const userCredits = ref(0)
-const paymentMessage = ref('')
-const paymentMessageType = ref('')
+const station = ref<StationData | null>(null);
+const isUserBanned = ref(false);
+const activeRental = ref<ActiveRental | null>(null);
+const currentRenterName = ref('');
+const currentRenterPhone = ref('');
+const currentProfilePictureUrl = ref('');
+const selectedSlot = ref<SlotData | null>(null);
+const selectedSlotName = ref('');
+const isCoinPaymentActive = ref(false);
+const liveCoinAmount = ref(0);
+const paymentPrice = ref(0);
+const isProcessing = ref(false);
+const isCreditPaymentActive = ref(false);
+const userCredits = ref(0);
+const paymentMessage = ref('');
+const paymentMessageType = ref('');
 
-let unsubStation: Unsubscribe | null = null
-let unsubCoinSlot: Unsubscribe | null = null
-let unsubCredits: Unsubscribe | null = null
-let unsubActiveRental: Unsubscribe | null = null
+let unsubStation: Unsubscribe | null = null;
+let unsubCoinSlot: Unsubscribe | null = null;
+let unsubCredits: Unsubscribe | null = null;
+let unsubActiveRental: Unsubscribe | null = null;
 
 onMounted(async () => {
-  const user = auth.currentUser
-  if (!user) return
+  const user = auth.currentUser;
+  if (!user) return;
 
-  const userData = await getUserData(user.uid)
+  const userData = await getUserData(user.uid);
   if (userData) {
-    currentRenterName.value = `${userData.firstName} ${userData.lastName}`.trim()
-    currentRenterPhone.value = userData.phoneNumber || ''
-    currentProfilePictureUrl.value = userData.profilePictureUrl || ''
+    currentRenterName.value = `${userData.firstName} ${userData.lastName}`.trim();
+    currentRenterPhone.value = userData.phoneNumber || '';
+    currentProfilePictureUrl.value = userData.profilePictureUrl || '';
   }
 
-  isUserBanned.value = await checkIfBanned(user.uid)
-  unsubStation = listenToStation(stationId, (data) => { station.value = data })
-  unsubCredits = listenToCreditPoints(user.uid, (credits) => { userCredits.value = credits })
-  unsubActiveRental = listenToActiveRental(user.uid, (rental) => { activeRental.value = rental })
-})
+  isUserBanned.value = await checkIfBanned(user.uid);
+
+  // Clear any stale pending locks before listening
+  await clearStalePendingSlots(stationId);
+
+  unsubStation = listenToStation(stationId, (data) => {
+    station.value = data;
+  });
+  unsubCredits = listenToCreditPoints(user.uid, (credits) => {
+    userCredits.value = credits;
+  });
+  unsubActiveRental = listenToActiveRental(user.uid, (rental) => {
+    activeRental.value = rental;
+  });
+});
 
 onUnmounted(async () => {
   // Release pending lock if user leaves the screen mid-selection
-  const user = auth.currentUser
+  const user = auth.currentUser;
   if (user && selectedSlotName.value && station.value) {
-    const currentSlot = station.value[selectedSlotName.value as 'slot1' | 'slot2']
+    const currentSlot = station.value[selectedSlotName.value as 'slot1' | 'slot2'];
     if (currentSlot?.status === 'pending' && currentSlot?.pendingBy === user.uid) {
-      await unlockSlotFromPayment(stationId, selectedSlotName.value)
+      await unlockSlotFromPayment(stationId, selectedSlotName.value);
     }
   }
-  if (unsubStation) unsubStation()
-  if (unsubCoinSlot) unsubCoinSlot()
-  if (unsubCredits) unsubCredits()
-  if (unsubActiveRental) unsubActiveRental()
-})
+  if (unsubStation) unsubStation();
+  if (unsubCoinSlot) unsubCoinSlot();
+  if (unsubCredits) unsubCredits();
+  if (unsubActiveRental) unsubActiveRental();
+});
 
-const goBack = (): void => { router.back() }
+const goBack = (): void => {
+  router.back();
+};
 
 const formatStatus = (status: string): string => {
   switch (status) {
-    case 'available': return 'Available'
-    case 'pending': return 'Pending...'
-    case 'rented': return 'Rented'
-    case 'charging': return 'Charging'
-    case 'maintenance': return 'Maintenance'
-    default: return status
+    case 'available':
+      return 'Available';
+    case 'pending':
+      return 'Pending...';
+    case 'rented':
+      return 'Rented';
+    case 'charging':
+      return 'Charging';
+    case 'maintenance':
+      return 'Maintenance';
+    default:
+      return status;
   }
-}
+};
 
 const getBatteryColor = (percent: number): string => {
-  if (percent >= 60) return 'green'
-  if (percent >= 30) return 'yellow'
-  return 'red'
-}
+  if (percent >= 60) return 'green';
+  if (percent >= 30) return 'yellow';
+  return 'red';
+};
 
 const formatDate = (dateStr: string): string => {
-  if (!dateStr) return ''
+  if (!dateStr) return '';
   try {
     return new Date(dateStr).toLocaleString('en-PH', {
-      month: 'short', day: 'numeric',
-      hour: 'numeric', minute: '2-digit', hour12: true,
-    })
-  } catch { return dateStr }
-}
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  } catch {
+    return dateStr;
+  }
+};
 
 const selectSlot = async (slotName: string, slot: SlotData): Promise<void> => {
   if (isUserBanned.value) {
-    alert('Your account is banned. You cannot rent.')
-    return
+    alert('Your account is banned. You cannot rent.');
+    return;
   }
   if (activeRental.value) {
-    alert(`You already have an active rental!\nStation ${activeRental.value.stationId} • ${activeRental.value.slotName}`)
-    return
+    alert(
+      `You already have an active rental!\nStation ${activeRental.value.stationId} • ${activeRental.value.slotName}`,
+    );
+    return;
   }
-  if (slot.status !== 'available') return
+  if (slot.status !== 'available') return;
 
-  const user = auth.currentUser
-  if (!user) return
+  const user = auth.currentUser;
+  if (!user) return;
 
   // Lock the slot immediately to block other users
-  const locked = await lockSlotForPayment(stationId, slotName, user.uid)
+  const locked = await lockSlotForPayment(stationId, slotName, user.uid);
   if (!locked) {
-    alert('Sorry, this slot was just taken by someone else.')
-    return
+    alert('Sorry, this slot was just taken by someone else.');
+    return;
   }
 
-  selectedSlotName.value = slotName
-  selectedSlot.value = slot
-}
+  selectedSlotName.value = slotName;
+  selectedSlot.value = slot;
+};
 
 const closeSlotInfo = async (): Promise<void> => {
   // Release the pending lock when user cancels
-  const user = auth.currentUser
+  const user = auth.currentUser;
   if (user && selectedSlotName.value) {
-    await unlockSlotFromPayment(stationId, selectedSlotName.value)
+    await unlockSlotFromPayment(stationId, selectedSlotName.value);
   }
-  selectedSlot.value = null
-  selectedSlotName.value = ''
-}
+  selectedSlot.value = null;
+  selectedSlotName.value = '';
+};
 
 const startCoinPayment = async (): Promise<void> => {
-  const user = auth.currentUser
-  if (!user || !selectedSlot.value) return
-  paymentPrice.value = selectedSlot.value.price
-  liveCoinAmount.value = 0
-  isCoinPaymentActive.value = true
-  selectedSlot.value = null
-  await startCoinSlotPayment(stationId, selectedSlotName.value, user.uid)
-  unsubCoinSlot = listenToCoinSlot(stationId, (amount) => { liveCoinAmount.value = amount })
-}
+  const user = auth.currentUser;
+  if (!user || !selectedSlot.value) return;
+  paymentPrice.value = selectedSlot.value.price;
+  liveCoinAmount.value = 0;
+  isCoinPaymentActive.value = true;
+  selectedSlot.value = null;
+  await startCoinSlotPayment(stationId, selectedSlotName.value, user.uid);
+  unsubCoinSlot = listenToCoinSlot(stationId, (amount) => {
+    liveCoinAmount.value = amount;
+  });
+};
 
 const finishCoinPayment = async (): Promise<void> => {
-  const user = auth.currentUser
-  if (!user || liveCoinAmount.value < paymentPrice.value) return
-  isProcessing.value = true
+  const user = auth.currentUser;
+  if (!user || liveCoinAmount.value < paymentPrice.value) return;
+  isProcessing.value = true;
   try {
     await finishCoinSlotPayment(
-      stationId, selectedSlotName.value, user.uid,
-      liveCoinAmount.value, paymentPrice.value, userCredits.value,
-      currentRenterName.value, currentRenterPhone.value, currentProfilePictureUrl.value,
-    )
-    if (unsubCoinSlot) unsubCoinSlot()
-    isCoinPaymentActive.value = false
-    alert('Payment successful! Enjoy your rental. Return within 12 hours.')
+      stationId,
+      selectedSlotName.value,
+      user.uid,
+      liveCoinAmount.value,
+      paymentPrice.value,
+      userCredits.value,
+      currentRenterName.value,
+      currentRenterPhone.value,
+      currentProfilePictureUrl.value,
+    );
+    if (unsubCoinSlot) unsubCoinSlot();
+    isCoinPaymentActive.value = false;
+    alert('Payment successful! Enjoy your rental. Return within 12 hours.');
   } catch (error) {
-    console.error('Payment error:', error)
-    alert('Payment failed. Please try again.')
+    console.error('Payment error:', error);
+    alert('Payment failed. Please try again.');
   } finally {
-    isProcessing.value = false
+    isProcessing.value = false;
   }
-}
+};
 
 const cancelPayment = async (): Promise<void> => {
   // Release pending lock then cancel coin payment
-  const user = auth.currentUser
+  const user = auth.currentUser;
   if (user && selectedSlotName.value) {
-    await unlockSlotFromPayment(stationId, selectedSlotName.value)
+    await unlockSlotFromPayment(stationId, selectedSlotName.value);
   }
-  await cancelCoinSlotPayment(stationId)
-  if (unsubCoinSlot) unsubCoinSlot()
-  isCoinPaymentActive.value = false
-  liveCoinAmount.value = 0
-}
+  await cancelCoinSlotPayment(stationId);
+  if (unsubCoinSlot) unsubCoinSlot();
+  isCoinPaymentActive.value = false;
+  liveCoinAmount.value = 0;
+};
 
 const startCreditPayment = (): void => {
-  if (!selectedSlot.value) return
-  paymentPrice.value = selectedSlot.value.price
-  isCreditPaymentActive.value = true
-  paymentMessage.value = ''
-  selectedSlot.value = null
-}
+  if (!selectedSlot.value) return;
+  paymentPrice.value = selectedSlot.value.price;
+  isCreditPaymentActive.value = true;
+  paymentMessage.value = '';
+  selectedSlot.value = null;
+};
 
 const confirmCreditPayment = async (): Promise<void> => {
-  const user = auth.currentUser
-  if (!user) return
-  isProcessing.value = true
-  paymentMessage.value = ''
+  const user = auth.currentUser;
+  if (!user) return;
+  isProcessing.value = true;
+  paymentMessage.value = '';
   try {
     const result = await payWithCreditPoints(
-      stationId, selectedSlotName.value, user.uid,
-      paymentPrice.value, userCredits.value,
-      currentRenterName.value, currentRenterPhone.value, currentProfilePictureUrl.value,
-    )
+      stationId,
+      selectedSlotName.value,
+      user.uid,
+      paymentPrice.value,
+      userCredits.value,
+      currentRenterName.value,
+      currentRenterPhone.value,
+      currentProfilePictureUrl.value,
+    );
     if (result.success) {
-      paymentMessageType.value = 'success'
-      paymentMessage.value = result.message
+      paymentMessageType.value = 'success';
+      paymentMessage.value = result.message;
       setTimeout(() => {
-        isCreditPaymentActive.value = false
-        paymentMessage.value = ''
-        alert('Payment successful! Enjoy your rental. Return within 12 hours.')
-      }, 1500)
+        isCreditPaymentActive.value = false;
+        paymentMessage.value = '';
+        alert('Payment successful! Enjoy your rental. Return within 12 hours.');
+      }, 1500);
     } else {
-      paymentMessageType.value = 'error'
-      paymentMessage.value = result.message
+      paymentMessageType.value = 'error';
+      paymentMessage.value = result.message;
     }
   } catch (error) {
-    console.error('Credit payment error:', error)
-    paymentMessage.value = 'Payment failed. Try again.'
-    paymentMessageType.value = 'error'
+    console.error('Credit payment error:', error);
+    paymentMessage.value = 'Payment failed. Try again.';
+    paymentMessageType.value = 'error';
   } finally {
-    isProcessing.value = false
+    isProcessing.value = false;
   }
-}
+};
 
 const closeCreditPayment = async (): Promise<void> => {
   // Release pending lock when user cancels credit payment
-  const user = auth.currentUser
+  const user = auth.currentUser;
   if (user && selectedSlotName.value) {
-    await unlockSlotFromPayment(stationId, selectedSlotName.value)
+    await unlockSlotFromPayment(stationId, selectedSlotName.value);
   }
-  isCreditPaymentActive.value = false
-  paymentMessage.value = ''
-}
+  isCreditPaymentActive.value = false;
+  paymentMessage.value = '';
+};
 </script>
 
 <style scoped>
@@ -729,5 +790,13 @@ const closeCreditPayment = async (): Promise<void> => {
   text-align: center;
   padding: 50px;
   color: #888;
+}
+.slot-card.pending {
+  border-color: #f39c12;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.slot-status.pending {
+  color: #f39c12;
 }
 </style>
