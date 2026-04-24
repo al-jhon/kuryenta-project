@@ -183,6 +183,62 @@ export const clearStalePendingSlots = async (stationId: string): Promise<void> =
   }
 };
 
+// Add this to realtimeService.ts
+export const refundCoinsToCredits = async (
+  stationId: string,
+  slotName: string,
+  userId: string,
+  coinAmount: number,
+  currentCredits: number,
+): Promise<void> => {
+  await update(ref(rtdb, `stations/${stationId}`), {
+    someoneWillPay: false,
+    paymentMethod: '',
+    whichSlot: '',
+    coinSlot: 0,
+    payingUserId: '',
+  });
+  await update(ref(rtdb, `stations/${stationId}/${slotName}`), {
+    status: 'available',
+    pendingBy: '',
+    pendingSince: '',
+  });
+  await update(ref(rtdb, `users/${userId}`), {
+    creditPoints: currentCredits + coinAmount,
+  });
+};
+
+// 1. Add to StationData interface
+export interface StationData {
+  place: string;
+  someoneWillPay: boolean;
+  paymentMethod: string;
+  coinSlot: number;
+  whichSlot: string;
+  payingUserId: string;
+  espReadyPay: boolean; // ← ADD THIS
+  slot1: SlotData;
+  slot2: SlotData;
+}
+
+// 2. Add this new function anywhere in the file
+export const setEspReadyPay = async (stationId: string, value: boolean): Promise<void> => {
+  await update(ref(rtdb, `stations/${stationId}`), { espReadyPay: value });
+};
+
+export const startCreditPointsPayment = async (
+  stationId: string,
+  slotName: string,
+  userId: string,
+): Promise<void> => {
+  await update(ref(rtdb, `stations/${stationId}`), {
+    someoneWillPay: true,
+    paymentMethod: 'creditPoints',
+    whichSlot: slotName,
+    payingUserId: userId,
+  });
+};
+
 export const lockSlotForPayment = async (
   stationId: string,
   slotName: string,
@@ -250,12 +306,14 @@ export const finishCoinSlotPayment = async (
   const returnBy = new Date(now.getTime() + 12 * 60 * 60 * 1000);
   const change = coinInserted - price;
 
+  // In realtimeService.ts — inside finishCoinSlotPayment
   await update(ref(rtdb, `stations/${stationId}`), {
     someoneWillPay: false,
     paymentMethod: '',
     whichSlot: '',
     coinSlot: 0,
     payingUserId: '',
+    espReadyPay: false, // ← add this
   });
 
   await update(ref(rtdb, `stations/${stationId}/${slotName}`), {
@@ -307,6 +365,7 @@ export const cancelCoinSlotPayment = async (stationId: string): Promise<void> =>
     whichSlot: '',
     coinSlot: 0,
     payingUserId: '',
+    espReadyPay: false, // ← add this
   });
 };
 
@@ -329,6 +388,18 @@ export const payWithCreditPoints = async (
 
   const now = new Date();
   const returnBy = new Date(now.getTime() + 12 * 60 * 60 * 1000);
+
+  // ← ADD THIS — clears all station-level payment fields
+  await update(ref(rtdb, `stations/${stationId}`), {
+    someoneWillPay: false,
+    paymentMethod: '',
+    whichSlot: '',
+    coinSlot: 0,
+    payingUserId: '',
+    espReadyPay: false,
+  });
+
+  // rest of the function unchanged...
 
   await update(ref(rtdb, `users/${userId}`), {
     creditPoints: currentCredits - price,

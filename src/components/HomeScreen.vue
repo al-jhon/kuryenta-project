@@ -4,12 +4,7 @@
     <div class="header">
       <div class="left-section">
         <!-- ✅ Real profile picture from Cloudinary -->
-        <img
-          v-if="profilePicture"
-          class="profile"
-          :src="profilePicture"
-          alt="profile picture"
-        />
+        <img v-if="profilePicture" class="profile" :src="profilePicture" alt="profile picture" />
         <!-- Fallback if no picture -->
         <div v-else class="profile profile-placeholder">
           <svg viewBox="0 0 24 24" fill="none" class="placeholder-icon">
@@ -25,7 +20,10 @@
         </div>
       </div>
       <div class="middle-section">
-        <p>Hello, {{ userName }}!</p>
+        <p>
+          Hello, <span class="userNameClass">{{ userName }}</span
+          >!
+        </p>
         <p>{{ userLocation }}</p>
       </div>
       <div>
@@ -74,10 +72,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { auth } from 'src/firebase/firebase';
 import { getUserData } from 'src/firebase/authService';
-import {
-  getStation,
-  listenToCreditPoints,
-} from 'src/firebase/realtimeService';
+import { getStation, listenToCreditPoints } from 'src/firebase/realtimeService';
 import type { Unsubscribe } from 'firebase/database';
 
 const router = useRouter();

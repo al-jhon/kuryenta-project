@@ -1,10 +1,10 @@
 /* ── src\features\homePage\Header.css ── */
 .home-container {
-  flex: 1;                   /* fill everything above the fixed footer */
+  flex: 1; /* fill everything above the fixed footer */
   display: flex;
   flex-direction: column;
-  overflow-y: auto;          /* THIS is the only scroll container */
-  min-height: 0;             /* allow flex child to shrink & scroll */
+  overflow-y: auto; /* THIS is the only scroll container */
+  min-height: 0; /* allow flex child to shrink & scroll */
 }
 
 /* ── header ── */
@@ -17,7 +17,7 @@
   justify-content: space-between;
   align-items: center;
   z-index: 101;
-  flex-shrink: 0;            /* header keeps its natural height */
+  flex-shrink: 0; /* header keeps its natural height */
 }
 
 .profile {
@@ -44,4 +44,8 @@
 
 p {
   margin: 0;
+}
+
+.userNameClass  {
+  font-weight: bold;
 }
