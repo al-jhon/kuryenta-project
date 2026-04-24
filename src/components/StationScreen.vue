@@ -1,4 +1,4 @@
-<!--src\components\StationScreen.vue  -->
+<!-- src\components\StationScreen.vue -->
 
 <template>
   <div class="station-container">
@@ -89,7 +89,15 @@
           <p>Return within: 12 hours</p>
         </div>
         <div class="payment-buttons">
-          <button class="pay-btn coin-btn" @click="startCoinPayment">Pay via Coin Slot</button>
+          <!-- Coin slot button is disabled while ESP32 is busy serving another user -->
+          <button
+            class="pay-btn coin-btn"
+            :class="{ 'btn-busy': isCoinSlotBusy }"
+            :disabled="isCoinSlotBusy"
+            @click="startCoinPayment"
+          >
+            {{ isCoinSlotBusy ? 'Coin Slot Busy...' : 'Pay via Coin Slot' }}
+          </button>
           <button class="pay-btn credit-btn" @click="startCreditPayment">
             Pay via Credit Points (P{{ userCredits }} available)
           </button>
@@ -98,10 +106,72 @@
       </div>
     </div>
 
+    <!-- ESP32 WAITING / LOADING MODAL -->
+    <div v-if="isWaitingForEsp" class="modal-overlay">
+      <div class="modal-card">
+        <!-- BEFORE: <h3>Preparing Coin Slot</h3> -->
+        <h3>
+          {{ pendingPaymentMethod === 'creditPoints' ? 'Preparing Slot' : 'Preparing Coin Slot' }}
+        </h3>
+        <div class="esp-loading-wrapper">
+          <div class="esp-spinner"></div>
+          <!-- BEFORE: <p class="esp-loading-text">Station is getting ready to accept coins...</p> -->
+          <p class="esp-loading-text">
+            {{
+              pendingPaymentMethod === 'creditPoints'
+                ? 'Station is unlocking your slot...'
+                : 'Station is getting ready to accept coins...'
+            }}
+          </p>
+          <div class="esp-timeout-bar-track">
+            <div
+              class="esp-timeout-bar-fill"
+              :class="{ warning: espTimeout <= 15, critical: espTimeout <= 5 }"
+              :style="{ width: (espTimeout / 30) * 100 + '%' }"
+            ></div>
+          </div>
+          <p
+            class="esp-timeout-label"
+            :class="{ warning: espTimeout <= 15, critical: espTimeout <= 5 }"
+          >
+            Timeout in {{ espTimeout }}s
+          </p>
+        </div>
+        <button class="cancel-btn" @click="cancelEspWait">Cancel</button>
+      </div>
+    </div>
+
     <!-- COIN SLOT PAYMENT MODAL -->
     <div v-if="isCoinPaymentActive" class="modal-overlay">
       <div class="modal-card coin-modal">
         <h3>Coin Slot Payment</h3>
+
+        <!-- COUNTDOWN TIMER RING -->
+        <div class="countdown-wrapper">
+          <div class="countdown-ring-container">
+            <svg class="countdown-svg" viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="28" class="ring-track" />
+              <circle
+                cx="32"
+                cy="32"
+                r="28"
+                class="ring-fill"
+                :class="{ warning: countdown <= 15, critical: countdown <= 5 }"
+                :style="{ strokeDashoffset: ringOffset }"
+              />
+            </svg>
+            <span
+              class="countdown-number"
+              :class="{ warning: countdown <= 15, critical: countdown <= 5 }"
+            >
+              {{ countdown }}
+            </span>
+          </div>
+          <p class="countdown-hint">
+            {{ liveCoinAmount > 0 ? 'Timer resets on each coin inserted' : 'Waiting for coins...' }}
+          </p>
+        </div>
+
         <div class="coin-info">
           <p class="coin-label">Price:</p>
           <p class="coin-value">P{{ paymentPrice }}</p>
@@ -144,6 +214,29 @@
     <div v-if="isCreditPaymentActive" class="modal-overlay">
       <div class="modal-card">
         <h3>Credit Points Payment</h3>
+        <!-- COUNTDOWN RING — same as coin modal -->
+        <div class="countdown-wrapper">
+          <div class="countdown-ring-container">
+            <svg class="countdown-svg" viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="28" class="ring-track" />
+              <circle
+                cx="32"
+                cy="32"
+                r="28"
+                class="ring-fill"
+                :class="{ warning: countdown <= 15, critical: countdown <= 5 }"
+                :style="{ strokeDashoffset: ringOffset }"
+              />
+            </svg>
+            <span
+              class="countdown-number"
+              :class="{ warning: countdown <= 15, critical: countdown <= 5 }"
+            >
+              {{ countdown }}
+            </span>
+          </div>
+          <p class="countdown-hint">Confirm before time runs out</p>
+        </div>
         <div class="coin-info">
           <p class="coin-label">Price:</p>
           <p class="coin-value">P{{ paymentPrice }}</p>
@@ -175,12 +268,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import type { WatchStopHandle } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { auth } from 'src/firebase/firebase';
 import { getUserData } from 'src/firebase/authService';
 import {
-  clearStalePendingSlots,
   listenToStation,
   listenToCoinSlot,
   listenToCreditPoints,
@@ -188,20 +281,28 @@ import {
   startCoinSlotPayment,
   finishCoinSlotPayment,
   cancelCoinSlotPayment,
+  refundCoinsToCredits,
   payWithCreditPoints,
   checkIfBanned,
   lockSlotForPayment,
   unlockSlotFromPayment,
+  setEspReadyPay,
   type StationData,
   type SlotData,
   type ActiveRental,
+  startCreditPointsPayment, // ← add this
 } from 'src/firebase/realtimeService';
 import type { Unsubscribe } from 'firebase/database';
+
+// ── CONSTANTS ──
+const COIN_TIMEOUT_SECONDS = 60;
+const ESP_TIMEOUT_SECONDS = 30;
 
 const route = useRoute();
 const router = useRouter();
 const stationId = route.params.stationId as string;
 
+// ── STATE ──
 const station = ref<StationData | null>(null);
 const isUserBanned = ref(false);
 const activeRental = ref<ActiveRental | null>(null);
@@ -210,15 +311,48 @@ const currentRenterPhone = ref('');
 const currentProfilePictureUrl = ref('');
 const selectedSlot = ref<SlotData | null>(null);
 const selectedSlotName = ref('');
+// tracks which method is waiting for ESP so proceedToPaymentModal knows where to go
+const pendingPaymentMethod = ref<'coinSlot' | 'creditPoints' | ''>('');
+
+// ESP waiting state
+const isWaitingForEsp = ref(false);
+const espTimeout = ref(ESP_TIMEOUT_SECONDS);
+
+// Coin payment state
 const isCoinPaymentActive = ref(false);
 const liveCoinAmount = ref(0);
 const paymentPrice = ref(0);
 const isProcessing = ref(false);
+const countdown = ref(COIN_TIMEOUT_SECONDS);
+
+// Credit payment state
 const isCreditPaymentActive = ref(false);
 const userCredits = ref(0);
 const paymentMessage = ref('');
 const paymentMessageType = ref('');
 
+// ── COMPUTED ──
+// True when ESP32 is actively serving a coin payment on this station
+const isCoinSlotBusy = computed(() => station.value?.espReadyPay === true);
+
+// SVG ring — circumference of r=28 circle ≈ 175.9
+const CIRCUMFERENCE = 2 * Math.PI * 28;
+const ringOffset = computed(() => CIRCUMFERENCE * (1 - countdown.value / COIN_TIMEOUT_SECONDS));
+
+// ── TIMERS / WATCHERS ──
+let espTimeoutInterval: ReturnType<typeof setInterval> | null = null;
+let stopEspWatch: WatchStopHandle | null = null;
+let countdownInterval: ReturnType<typeof setInterval> | null = null;
+let savedSlotData: SlotData | null = null;
+
+// Reset coin timer every time a coin is inserted
+watch(liveCoinAmount, (newVal, oldVal) => {
+  if (isCoinPaymentActive.value && newVal > oldVal) {
+    countdown.value = COIN_TIMEOUT_SECONDS;
+  }
+});
+
+// ── FIREBASE LISTENERS ──
 let unsubStation: Unsubscribe | null = null;
 let unsubCoinSlot: Unsubscribe | null = null;
 let unsubCredits: Unsubscribe | null = null;
@@ -236,10 +370,6 @@ onMounted(async () => {
   }
 
   isUserBanned.value = await checkIfBanned(user.uid);
-
-  // Clear any stale pending locks before listening
-  await clearStalePendingSlots(stationId);
-
   unsubStation = listenToStation(stationId, (data) => {
     station.value = data;
   });
@@ -252,7 +382,13 @@ onMounted(async () => {
 });
 
 onUnmounted(async () => {
-  // Release pending lock if user leaves the screen mid-selection
+  // Save BEFORE clearing — clearEspWait sets isWaitingForEsp to false
+  const wasWaitingForEsp = isWaitingForEsp.value;
+  const wasCoinActive = isCoinPaymentActive.value;
+
+  clearCountdown();
+  clearEspWait();
+
   const user = auth.currentUser;
   if (user && selectedSlotName.value && station.value) {
     const currentSlot = station.value[selectedSlotName.value as 'slot1' | 'slot2'];
@@ -260,11 +396,159 @@ onUnmounted(async () => {
       await unlockSlotFromPayment(stationId, selectedSlotName.value);
     }
   }
+
+  // Now uses saved values instead of the already-cleared ones
+  if (wasWaitingForEsp || wasCoinActive) {
+    await setEspReadyPay(stationId, false);
+    await cancelCoinSlotPayment(stationId);
+  }
+
   if (unsubStation) unsubStation();
   if (unsubCoinSlot) unsubCoinSlot();
   if (unsubCredits) unsubCredits();
   if (unsubActiveRental) unsubActiveRental();
 });
+
+// ────────────────────────────────────────────
+// ESP WAITING HELPERS
+// ────────────────────────────────────────────
+
+/** Clears ESP timeout interval and station watcher without touching Firebase. */
+const clearEspWait = (): void => {
+  if (espTimeoutInterval) {
+    clearInterval(espTimeoutInterval);
+    espTimeoutInterval = null;
+  }
+  if (stopEspWatch) {
+    stopEspWatch();
+    stopEspWatch = null;
+  }
+  isWaitingForEsp.value = false;
+};
+
+/** Called when 30s timeout fires — ESP32 never responded. */
+const handleEspTimeout = async (): Promise<void> => {
+  const user = auth.currentUser;
+  if (user && selectedSlotName.value) {
+    await unlockSlotFromPayment(stationId, selectedSlotName.value);
+  }
+  await cancelCoinSlotPayment(stationId);
+  await setEspReadyPay(stationId, false);
+  savedSlotData = null;
+  alert('The station is not responding. Please try again or contact support.');
+};
+
+/** Called when user manually taps Cancel during loading. */
+const cancelEspWait = async (): Promise<void> => {
+  clearEspWait();
+  const user = auth.currentUser;
+  if (user && selectedSlotName.value) {
+    await unlockSlotFromPayment(stationId, selectedSlotName.value);
+  }
+  await cancelCoinSlotPayment(stationId);
+  await setEspReadyPay(stationId, false);
+  savedSlotData = null;
+  selectedSlotName.value = ''; // ← add this line
+  pendingPaymentMethod.value = ''; // ← add this
+};
+
+/** Called when espReadyPay flips to true — open the actual coin payment UI. */
+const proceedToPaymentModal = (): void => {
+  if (pendingPaymentMethod.value === 'coinSlot') {
+    isCoinPaymentActive.value = true;
+    unsubCoinSlot = listenToCoinSlot(stationId, (amount) => {
+      liveCoinAmount.value = amount;
+    });
+    startCountdown();
+  } else if (pendingPaymentMethod.value === 'creditPoints') {
+    isCreditPaymentActive.value = true;
+    paymentMessage.value = '';
+    startCountdown(); // ← add this
+  }
+};
+// ────────────────────────────────────────────
+// COIN COUNTDOWN HELPERS
+// ────────────────────────────────────────────
+
+const startCountdown = (): void => {
+  clearCountdown();
+  countdown.value = COIN_TIMEOUT_SECONDS;
+  countdownInterval = setInterval(() => {
+    countdown.value--;
+    if (countdown.value <= 0) {
+      clearCountdown();
+      void handleCoinTimerExpiry();
+    }
+  }, 1000);
+};
+
+const clearCountdown = (): void => {
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+};
+
+const handleCoinTimerExpiry = async (): Promise<void> => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  // ── CREDIT POINTS TIMER EXPIRED ──
+  if (pendingPaymentMethod.value === 'creditPoints') {
+    await cancelCoinSlotPayment(stationId);
+    isCreditPaymentActive.value = false;
+    paymentMessage.value = '';
+    // Go back to payment options if no payment was made
+    if (savedSlotData) {
+      selectedSlot.value = savedSlotData;
+    }
+    return;
+  }
+
+  // ── COIN SLOT TIMER EXPIRED ──
+  if (unsubCoinSlot) unsubCoinSlot();
+  await setEspReadyPay(stationId, false);
+
+  if (liveCoinAmount.value === 0) {
+    await cancelCoinSlotPayment(stationId);
+    isCoinPaymentActive.value = false;
+    liveCoinAmount.value = 0;
+    if (savedSlotData) {
+      selectedSlot.value = savedSlotData;
+    }
+    return;
+  }
+
+  if (liveCoinAmount.value < paymentPrice.value) {
+    isProcessing.value = true;
+    const refundAmount = liveCoinAmount.value;
+    try {
+      await refundCoinsToCredits(
+        stationId,
+        selectedSlotName.value,
+        user.uid,
+        refundAmount,
+        userCredits.value,
+      );
+      isCoinPaymentActive.value = false;
+      liveCoinAmount.value = 0;
+      savedSlotData = null;
+      alert(
+        `Time's up! You inserted P${refundAmount} but the price is P${paymentPrice.value}.\n` +
+          `P${refundAmount} has been added to your credit points.`,
+      );
+    } catch (error) {
+      console.error('Refund error:', error);
+      alert('Something went wrong refunding your coins. Please contact support.');
+    } finally {
+      isProcessing.value = false;
+    }
+  }
+};
+
+// ────────────────────────────────────────────
+// SLOT SELECTION
+// ────────────────────────────────────────────
 
 const goBack = (): void => {
   router.back();
@@ -324,7 +608,6 @@ const selectSlot = async (slotName: string, slot: SlotData): Promise<void> => {
   const user = auth.currentUser;
   if (!user) return;
 
-  // Lock the slot immediately to block other users
   const locked = await lockSlotForPayment(stationId, slotName, user.uid);
   if (!locked) {
     alert('Sorry, this slot was just taken by someone else.');
@@ -336,32 +619,69 @@ const selectSlot = async (slotName: string, slot: SlotData): Promise<void> => {
 };
 
 const closeSlotInfo = async (): Promise<void> => {
-  // Release the pending lock when user cancels
   const user = auth.currentUser;
   if (user && selectedSlotName.value) {
     await unlockSlotFromPayment(stationId, selectedSlotName.value);
   }
   selectedSlot.value = null;
   selectedSlotName.value = '';
+  savedSlotData = null;
 };
+
+// ────────────────────────────────────────────
+// COIN PAYMENT
+// ────────────────────────────────────────────
 
 const startCoinPayment = async (): Promise<void> => {
   const user = auth.currentUser;
   if (!user || !selectedSlot.value) return;
+
+  pendingPaymentMethod.value = 'coinSlot'; // ← add this line
   paymentPrice.value = selectedSlot.value.price;
   liveCoinAmount.value = 0;
-  isCoinPaymentActive.value = true;
+
+  // Save slot so we can restore the payment-options modal in Scene 1
+  savedSlotData = { ...selectedSlot.value };
+
+  // Close payment-options modal immediately
   selectedSlot.value = null;
+
+  // Tell ESP32 to prepare (sets someoneWillPay: true, whichSlot, etc.)
   await startCoinSlotPayment(stationId, selectedSlotName.value, user.uid);
-  unsubCoinSlot = listenToCoinSlot(stationId, (amount) => {
-    liveCoinAmount.value = amount;
-  });
+
+  // Show the loading modal
+  isWaitingForEsp.value = true;
+  espTimeout.value = ESP_TIMEOUT_SECONDS;
+
+  // Start 30-second visual countdown
+  espTimeoutInterval = setInterval(() => {
+    espTimeout.value--;
+    if (espTimeout.value <= 0) {
+      clearEspWait();
+      void handleEspTimeout();
+    }
+  }, 1000);
+
+  // Watch station for espReadyPay to flip true (ESP32 confirmed ready)
+  stopEspWatch = watch(
+    () => station.value?.espReadyPay,
+    (ready) => {
+      if (ready === true && isWaitingForEsp.value) {
+        clearEspWait();
+        proceedToPaymentModal(); // ← was proceedToCoinModal
+      }
+    },
+  );
 };
 
 const finishCoinPayment = async (): Promise<void> => {
   const user = auth.currentUser;
   if (!user || liveCoinAmount.value < paymentPrice.value) return;
+
+  // Stop the countdown — user finished in time
+  clearCountdown();
   isProcessing.value = true;
+
   try {
     await finishCoinSlotPayment(
       stationId,
@@ -374,8 +694,10 @@ const finishCoinPayment = async (): Promise<void> => {
       currentRenterPhone.value,
       currentProfilePictureUrl.value,
     );
+    // Reset ESP flag — payment is done
     if (unsubCoinSlot) unsubCoinSlot();
     isCoinPaymentActive.value = false;
+    savedSlotData = null;
     alert('Payment successful! Enjoy your rental. Return within 12 hours.');
   } catch (error) {
     console.error('Payment error:', error);
@@ -386,28 +708,65 @@ const finishCoinPayment = async (): Promise<void> => {
 };
 
 const cancelPayment = async (): Promise<void> => {
-  // Release pending lock then cancel coin payment
+  clearCountdown();
   const user = auth.currentUser;
   if (user && selectedSlotName.value) {
     await unlockSlotFromPayment(stationId, selectedSlotName.value);
   }
   await cancelCoinSlotPayment(stationId);
+  await setEspReadyPay(stationId, false);
   if (unsubCoinSlot) unsubCoinSlot();
   isCoinPaymentActive.value = false;
   liveCoinAmount.value = 0;
+  savedSlotData = null;
 };
 
-const startCreditPayment = (): void => {
-  if (!selectedSlot.value) return;
+// ────────────────────────────────────────────
+// CREDIT PAYMENT
+// ────────────────────────────────────────────
+
+const startCreditPayment = async (): Promise<void> => {
+  const user = auth.currentUser;
+  if (!user || !selectedSlot.value) return;
+
+  pendingPaymentMethod.value = 'creditPoints';
   paymentPrice.value = selectedSlot.value.price;
-  isCreditPaymentActive.value = true;
-  paymentMessage.value = '';
+  savedSlotData = { ...selectedSlot.value };
+
+  // Close payment-options modal
   selectedSlot.value = null;
+
+  // Tell ESP32 to prepare (paymentMethod: 'creditPoints', whichSlot set)
+  await startCreditPointsPayment(stationId, selectedSlotName.value, user.uid);
+
+  // Show loading modal
+  isWaitingForEsp.value = true;
+  espTimeout.value = ESP_TIMEOUT_SECONDS;
+
+  espTimeoutInterval = setInterval(() => {
+    espTimeout.value--;
+    if (espTimeout.value <= 0) {
+      clearEspWait();
+      void handleEspTimeout();
+    }
+  }, 1000);
+
+  // Watch for ESP32 to confirm ready
+  stopEspWatch = watch(
+    () => station.value?.espReadyPay,
+    (ready) => {
+      if (ready === true && isWaitingForEsp.value) {
+        clearEspWait();
+        proceedToPaymentModal();
+      }
+    },
+  );
 };
 
 const confirmCreditPayment = async (): Promise<void> => {
   const user = auth.currentUser;
   if (!user) return;
+  clearCountdown(); // ← add this — user confirmed, stop the timer
   isProcessing.value = true;
   paymentMessage.value = '';
   try {
@@ -427,6 +786,7 @@ const confirmCreditPayment = async (): Promise<void> => {
       setTimeout(() => {
         isCreditPaymentActive.value = false;
         paymentMessage.value = '';
+        pendingPaymentMethod.value = ''; // ← add this
         alert('Payment successful! Enjoy your rental. Return within 12 hours.');
       }, 1500);
     } else {
@@ -443,13 +803,16 @@ const confirmCreditPayment = async (): Promise<void> => {
 };
 
 const closeCreditPayment = async (): Promise<void> => {
-  // Release pending lock when user cancels credit payment
+  clearCountdown(); // ← add this
   const user = auth.currentUser;
   if (user && selectedSlotName.value) {
     await unlockSlotFromPayment(stationId, selectedSlotName.value);
   }
+  await cancelCoinSlotPayment(stationId); // resets someoneWillPay, espReadyPay, etc.
   isCreditPaymentActive.value = false;
   paymentMessage.value = '';
+  pendingPaymentMethod.value = '';
+  selectedSlotName.value = '';
 };
 </script>
 
@@ -567,6 +930,11 @@ const closeCreditPayment = async (): Promise<void> => {
   opacity: 0.4;
   cursor: not-allowed;
 }
+.slot-card.pending {
+  border-color: #f39c12;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 .slot-card h3 {
   margin: 0 0 10px 0;
   color: #0e255c;
@@ -600,7 +968,6 @@ const closeCreditPayment = async (): Promise<void> => {
 .battery-fill.red {
   background-color: #e74c3c;
 }
-
 .battery-text {
   font-size: 14px;
   color: #555;
@@ -629,8 +996,11 @@ const closeCreditPayment = async (): Promise<void> => {
 .slot-status.maintenance {
   color: #999;
 }
+.slot-status.pending {
+  color: #f39c12;
+}
 
-/* ── MODAL OVERLAY ── */
+/* ── MODAL ── */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -679,6 +1049,7 @@ const closeCreditPayment = async (): Promise<void> => {
   font-weight: 600;
   cursor: pointer;
   font-family: 'Poppins', sans-serif;
+  transition: opacity 0.2s;
 }
 .coin-btn {
   background-color: #f39c12;
@@ -687,6 +1058,11 @@ const closeCreditPayment = async (): Promise<void> => {
 .credit-btn {
   background-color: #0e255c;
   color: white;
+}
+.btn-busy {
+  background-color: #bbb;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 .cancel-btn {
   margin-top: 10px;
@@ -699,6 +1075,129 @@ const closeCreditPayment = async (): Promise<void> => {
   cursor: pointer;
   width: 100%;
   font-family: 'Poppins', sans-serif;
+}
+
+/* ── ESP WAITING / LOADING ── */
+.esp-loading-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0 20px;
+  gap: 12px;
+}
+.esp-spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #e0e0e0;
+  border-top-color: #0e255c;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.esp-loading-text {
+  font-size: 14px;
+  color: #555;
+  margin: 0;
+}
+.esp-timeout-bar-track {
+  width: 100%;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.esp-timeout-bar-fill {
+  height: 100%;
+  background-color: #27ae60;
+  border-radius: 4px;
+  transition:
+    width 1s linear,
+    background-color 0.3s;
+}
+.esp-timeout-bar-fill.warning {
+  background-color: #f39c12;
+}
+.esp-timeout-bar-fill.critical {
+  background-color: #e74c3c;
+}
+.esp-timeout-label {
+  font-size: 12px;
+  color: #888;
+  margin: 0;
+}
+.esp-timeout-label.warning {
+  color: #f39c12;
+  font-weight: 600;
+}
+.esp-timeout-label.critical {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+/* ── COUNTDOWN RING ── */
+.countdown-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.countdown-ring-container {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+.countdown-svg {
+  width: 64px;
+  height: 64px;
+  transform: rotate(-90deg);
+}
+.ring-track {
+  fill: none;
+  stroke: #e0e0e0;
+  stroke-width: 5;
+}
+.ring-fill {
+  fill: none;
+  stroke: #27ae60;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 175.9;
+  stroke-dashoffset: 0;
+  transition:
+    stroke-dashoffset 1s linear,
+    stroke 0.3s;
+}
+.ring-fill.warning {
+  stroke: #f39c12;
+}
+.ring-fill.critical {
+  stroke: #e74c3c;
+}
+.countdown-number {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #27ae60;
+  font-family: 'Poppins', sans-serif;
+}
+.countdown-number.warning {
+  color: #f39c12;
+}
+.countdown-number.critical {
+  color: #e74c3c;
+}
+.countdown-hint {
+  font-size: 11px;
+  color: #aaa;
+  margin: 6px 0 0 0;
 }
 
 /* ── COIN PAYMENT ── */
@@ -742,7 +1241,6 @@ const closeCreditPayment = async (): Promise<void> => {
 .coin-progress-fill.sufficient {
   background-color: #27ae60;
 }
-
 .coin-status {
   font-size: 13px;
   color: #888;
@@ -790,13 +1288,5 @@ const closeCreditPayment = async (): Promise<void> => {
   text-align: center;
   padding: 50px;
   color: #888;
-}
-.slot-card.pending {
-  border-color: #f39c12;
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-.slot-status.pending {
-  color: #f39c12;
 }
 </style>
