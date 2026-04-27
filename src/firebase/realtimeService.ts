@@ -51,6 +51,7 @@ export interface ActiveRental {
   slotName: string;
   rentedAt: string;
   returnBy: string;
+  rentalId: string;
 }
 
 export interface RentalHistoryData {
@@ -305,6 +306,7 @@ export const finishCoinSlotPayment = async (
   const now = new Date();
   const returnBy = new Date(now.getTime() + 12 * 60 * 60 * 1000);
   const change = coinInserted - price;
+  const rentalId = `rental_${Date.now()}`;
 
   // In realtimeService.ts — inside finishCoinSlotPayment
   await update(ref(rtdb, `stations/${stationId}`), {
@@ -337,10 +339,11 @@ export const finishCoinSlotPayment = async (
       slotName,
       rentedAt: now.toISOString(),
       returnBy: returnBy.toISOString(),
+      rentalId,
     },
   });
 
-  const rentalId = `rental_${Date.now()}`;
+
   await set(ref(rtdb, `rentalHistory/${rentalId}`), {
     userId,
     userName: renterName,
@@ -388,6 +391,8 @@ export const payWithCreditPoints = async (
 
   const now = new Date();
   const returnBy = new Date(now.getTime() + 12 * 60 * 60 * 1000);
+   const rentalId = `rental_${Date.now()}`;
+
 
   // ← ADD THIS — clears all station-level payment fields
   await update(ref(rtdb, `stations/${stationId}`), {
@@ -408,6 +413,7 @@ export const payWithCreditPoints = async (
       slotName,
       rentedAt: now.toISOString(),
       returnBy: returnBy.toISOString(),
+      rentalId, 
     },
   });
 
@@ -425,7 +431,7 @@ export const payWithCreditPoints = async (
     pendingSince: '',
   });
 
-  const rentalId = `rental_${Date.now()}`;
+
   await set(ref(rtdb, `rentalHistory/${rentalId}`), {
     userId,
     userName: renterName,
@@ -457,4 +463,44 @@ export const listenToUserRentalHistory = (
       .sort((a, b) => new Date(b.rentedAt).getTime() - new Date(a.rentedAt).getTime());
     callback(userHistory);
   });
+};
+
+// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+// ALERTS
+// ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+export interface AlertData {
+  timeStamp: number; // Unix ms — e.g. 1714000000000
+  content: string;
+  view: boolean;
+}
+
+export interface AlertItem {
+  id: string;
+  data: AlertData;
+}
+
+export const listenToAlerts = (
+  userId: string,
+  callback: (alerts: AlertItem[]) => void,
+): Unsubscribe => {
+  const alertsRef = ref(rtdb, `users/${userId}/alerts`);
+  return onValue(alertsRef, (snapshot) => {
+    const raw = snapshot.val() || {};
+    const alerts: AlertItem[] = Object.entries(raw as Record<string, AlertData>)
+      .map(([id, data]) => ({ id, data }))
+      .sort((a, b) => b.data.timeStamp - a.data.timeStamp); // newest first
+    callback(alerts);
+  });
+};
+
+export const markAlertAsViewed = async (userId: string, alertId: string): Promise<void> => {
+  await update(ref(rtdb, `users/${userId}/alerts/${alertId}`), { view: true });
+};
+
+export const deleteAlert = async (userId: string, alertId: string): Promise<void> => {
+  await set(ref(rtdb, `users/${userId}/alerts/${alertId}`), null);
+};
+
+export const deleteAllAlerts = async (userId: string): Promise<void> => {
+  await set(ref(rtdb, `users/${userId}/alerts`), null);
 };
