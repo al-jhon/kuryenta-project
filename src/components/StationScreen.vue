@@ -30,7 +30,11 @@
         <!-- SLOT 1 -->
         <div
           class="slot-card"
-          :class="station.slot1.status"
+          :class="[
+            station.slot1.status,
+            { 'low-battery': isSlotLowBattery(station.slot1) },
+            { 'slot-offline': isSlotOffline(station.slot1) },
+          ]"
           @click="selectSlot('slot1', station.slot1)"
         >
           <h3>Slot 1</h3>
@@ -49,12 +53,21 @@
           <p v-if="station.slot1.status === 'rented'" class="renter-label">
             {{ station.slot1.rentedByName || 'Rented' }}
           </p>
+          <!-- WARNING BADGES -->
+          <p v-if="isSlotOffline(station.slot1)" class="slot-warning offline-label">📡 Offline</p>
+          <p v-else-if="isSlotLowBattery(station.slot1)" class="slot-warning lowbat-label">
+            🔋 Low Battery
+          </p>
         </div>
 
         <!-- SLOT 2 -->
         <div
           class="slot-card"
-          :class="station.slot2.status"
+          :class="[
+            station.slot2.status,
+            { 'low-battery': isSlotLowBattery(station.slot2) },
+            { 'slot-offline': isSlotOffline(station.slot2) },
+          ]"
           @click="selectSlot('slot2', station.slot2)"
         >
           <h3>Slot 2</h3>
@@ -72,6 +85,11 @@
           </p>
           <p v-if="station.slot2.status === 'rented'" class="renter-label">
             {{ station.slot2.rentedByName || 'Rented' }}
+          </p>
+          <!-- WARNING BADGES -->
+          <p v-if="isSlotOffline(station.slot2)" class="slot-warning offline-label">📡 Offline</p>
+          <p v-else-if="isSlotLowBattery(station.slot2)" class="slot-warning lowbat-label">
+            🔋 Low Battery
           </p>
         </div>
       </div>
@@ -592,6 +610,23 @@ const formatDate = (dateStr: string): string => {
   }
 };
 
+// ── SLOT AVAILABILITY HELPERS ──
+
+const isSlotOffline = (slot: SlotData): boolean => {
+  if (!slot.onlineChecker) return true;
+  try {
+    const lastSeen = new Date(slot.onlineChecker).getTime();
+    const now = Date.now();
+    return now - lastSeen > 10 * 60 * 1000; // more than 10 minutes
+  } catch {
+    return true;
+  }
+};
+
+const isSlotLowBattery = (slot: SlotData): boolean => {
+  return slot.batteryPercent < 70;
+};
+
 const selectSlot = async (slotName: string, slot: SlotData): Promise<void> => {
   if (isUserBanned.value) {
     alert('Your account is banned. You cannot rent.');
@@ -603,7 +638,20 @@ const selectSlot = async (slotName: string, slot: SlotData): Promise<void> => {
     );
     return;
   }
-  if (slot.status !== 'available') return;
+  if (slot.status !== 'available' && slot.status !== 'pending') return;
+
+  // ── NEW CHECKS ──
+  if (isSlotLowBattery(slot)) {
+    alert('This slot cannot be rented. Battery level is below 70%.');
+    return;
+  }
+  if (isSlotOffline(slot)) {
+    alert(
+      'This slot appears to be offline. It may have lost internet connection. Please try again later.',
+    );
+    return;
+  }
+  // ── END NEW CHECKS ──
 
   const user = auth.currentUser;
   if (!user) return;
@@ -1288,5 +1336,34 @@ const closeCreditPayment = async (): Promise<void> => {
   text-align: center;
   padding: 50px;
   color: #888;
+}
+
+/* ── LOW BATTERY / OFFLINE SLOT STATES ── */
+.slot-card.low-battery {
+  border-color: #e67e22;
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+.slot-card.slot-offline {
+  border-color: #95a5a6;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.slot-warning {
+  font-size: 11px;
+  font-weight: 600;
+  margin: 6px 0 0 0;
+  border-radius: 6px;
+  padding: 2px 6px;
+  display: inline-block;
+}
+.offline-label {
+  color: #7f8c8d;
+  background: #ecf0f1;
+}
+.lowbat-label {
+  color: #e67e22;
+  background: #fef5ec;
 }
 </style>

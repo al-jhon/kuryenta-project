@@ -7,7 +7,7 @@
           <span class="back-arrow"></span>
         </button>
 
-        <img class="image-logo" src="src/assets/Kuryenta_logo.png" alt="Kuryenta Logo" />
+        <img class="image-logo" src="/assets/Kuryenta_logo.png" alt="Kuryenta Logo" />
 
         <div class="div-container">
           <div class="first-container">
@@ -85,7 +85,7 @@
               />
               <img
                 class="eye"
-                :src="showPassword ? 'src/assets/eye-open.png' : 'src/assets/eye-close.png'"
+                :src="showPassword ? '/assets/eye-open.png' : '/assets/eye-close.png'"
                 @click="showPassword = !showPassword"
               />
             </div>
@@ -102,7 +102,7 @@
               />
               <img
                 class="eye"
-                :src="showConfirmPassword ? 'src/assets/eye-open.png' : 'src/assets/eye-close.png'"
+                :src="showConfirmPassword ? '/assets/eye-open.png' : '/assets/eye-close.png'"
                 @click="showConfirmPassword = !showConfirmPassword"
               />
             </div>

@@ -7,7 +7,7 @@
           <span class="back-arrow"></span>
         </button>
 
-        <img class="image-logo" src="src/assets/Kuryenta_logo.png" alt="Kuryenta Logo" />
+        <img class="image-logo" src="/assets/Kuryenta_logo.png" alt="Kuryenta Logo" />
 
         <div class="div-container">
 

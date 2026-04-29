@@ -1,3 +1,4 @@
+// src\firebase\authService.ts
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,

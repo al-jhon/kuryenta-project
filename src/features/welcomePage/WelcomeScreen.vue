@@ -3,7 +3,7 @@
   <q-layout view="lHh Lpr lFf">
     <q-page-container>
       <div class="background">
-        <img class="image-logo" src="src/assets/Kuryenta_logo.png" alt="" />
+        <img class="image-logo" src="/assets/Kuryenta_logo.png" alt="" />
         <div class="div-container">
           <div class="first-container">
             <hr class="hr-left" width="100%" />

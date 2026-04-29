@@ -8,7 +8,7 @@
       <router-link :to="{ name: 'home' }" custom v-slot="{ navigate, isExactActive }">
         <div class="footer-item" :class="{ active: isExactActive }" @click="navigate">
           <div class="icon-bubble">
-            <img class="footer-icon" src="src/assets/home.png" alt="home" />
+            <img class="footer-icon" src="/assets/home.png" alt="home" />
           </div>
           <span class="footer-label">Home</span>
         </div>
@@ -18,7 +18,7 @@
       <router-link :to="{ name: 'alertsScreen' }" custom v-slot="{ navigate, isExactActive }">
         <div class="footer-item" :class="{ active: isExactActive }" @click="navigate">
           <div class="icon-bubble" style="position: relative">
-            <img class="footer-icon" src="src/assets/notification.png" alt="notification" />
+            <img class="footer-icon" src="/assets/notification.png" alt="notification" />
             <span v-if="unreadCount > 0" class="alerts-badge">
               {{ unreadCount > 9 ? '9+' : unreadCount }}
             </span>
@@ -31,7 +31,7 @@
       <router-link :to="{ name: 'profile' }" custom v-slot="{ navigate, isExactActive }">
         <div class="footer-item" :class="{ active: isExactActive }" @click="navigate">
           <div class="icon-bubble">
-            <img class="footer-icon" src="src/assets/user-icon.png" alt="profile" />
+            <img class="footer-icon" src="/assets/user-icon.png" alt="profile" />
           </div>
           <span class="footer-label">Profile</span>
         </div>

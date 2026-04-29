@@ -10,6 +10,7 @@ export interface SlotData {
   batteryPercent: number;
   price: number;
   status: 'available' | 'rented' | 'charging' | 'maintenance' | 'pending';
+  onlineChecker?: string; // ← ADD THIS (e.g. "2026-03-12T18:30")
   isPresent?: boolean;
   isLocked?: boolean;
   isCharging?: boolean;
@@ -413,7 +414,7 @@ export const payWithCreditPoints = async (
       slotName,
       rentedAt: now.toISOString(),
       returnBy: returnBy.toISOString(),
-      rentalId, 
+      rentalId,
     },
   });
 
