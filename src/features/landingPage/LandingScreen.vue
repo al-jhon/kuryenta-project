@@ -4,7 +4,7 @@
     <q-page-container>
       <div class="background">
         <div class="div-logo">
-          <q-img class="logo" src="src/assets/Kuryenta_logo.png" />
+          <q-img class="logo" src="/assets/Kuryenta_logo.png" />
         </div>
         <div class="div-button">
           <q-btn @click="getStarted"> Get Started </q-btn>

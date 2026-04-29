@@ -27,7 +27,7 @@
         <p>{{ userLocation }}</p>
       </div>
       <div>
-        <img class="kuryenta-logo" src="src/assets/Kuryenta_logo.png" alt="Kuryenta-logo" />
+        <img class="kuryenta-logo" src="/assets/Kuryenta_logo.png" alt="Kuryenta-logo" />
       </div>
     </div>
 
@@ -43,7 +43,7 @@
         />
         <img
           class="search-icon"
-          src="src/assets/search-icon.png"
+          src="/assets/search-icon.png"
           alt="search"
           @click="searchStation"
         />
@@ -55,11 +55,11 @@
       <!-- CREDIT POINTS (Real-Time) -->
       <div class="credit-container">
         <div class="icons">
-          <img src="src/assets/credit-icon.png" alt="" />
+          <img src="/assets/credit-icon.png" alt="" />
           <p class="credit-points">Credit Points</p>
         </div>
         <div class="credit-value">
-          <img src="src/assets/peso-icon.png" alt="" />
+          <img src="/assets/peso-icon.png" alt="" />
           <p>{{ creditPoints }}</p>
         </div>
       </div>

@@ -1,3 +1,4 @@
+<!-- src\components\ProfileScreen.vue -->
 <template>
   <div class="profile-page">
 

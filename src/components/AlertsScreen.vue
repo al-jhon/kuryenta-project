@@ -1,3 +1,4 @@
+<!-- src\components\AlertsScreen.vue -->
 <template>
   <div class="alerts-container">
     <!-- HEADER -->
