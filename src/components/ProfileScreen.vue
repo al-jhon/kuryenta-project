@@ -1,7 +1,6 @@
 <!-- src\components\ProfileScreen.vue -->
 <template>
   <div class="profile-page">
-
     <!-- ── HERO HEADER ─────────────────────────────── -->
     <div class="hero">
       <div class="hero-glow"></div>
@@ -34,7 +33,10 @@
           <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
             <path
               d="M23 19C23 19.53 22.79 20.04 22.41 20.41C22.04 20.79 21.53 21 21 21H3C2.47 21 1.96 20.79 1.59 20.41C1.21 20.04 1 19.53 1 19V8C1 7.47 1.21 6.96 1.59 6.59C1.96 6.21 2.47 6 3 6H7L9 3H15L17 6H21C21.53 6 22.04 6.21 22.41 6.59C22.79 6.96 23 7.47 23 8V19Z"
-              stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              stroke="white"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             />
             <circle cx="12" cy="13" r="4" stroke="white" stroke-width="2" />
           </svg>
@@ -43,9 +45,7 @@
 
       <!-- Name + Credits -->
       <div class="hero-info">
-        <h1 class="hero-name" v-if="userData">
-          {{ userData.firstName }} {{ userData.lastName }}
-        </h1>
+        <h1 class="hero-name" v-if="userData">{{ userData.firstName }} {{ userData.lastName }}</h1>
         <div v-else class="skeleton name-skeleton"></div>
 
         <div class="credits-chip">
@@ -56,26 +56,37 @@
       </div>
 
       <!-- Curved bottom -->
-      <svg class="hero-curve" viewBox="0 0 390 48" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <svg
+        class="hero-curve"
+        viewBox="0 0 390 48"
+        preserveAspectRatio="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
         <path d="M0 48 Q195 0 390 48 L390 48 L0 48Z" fill="#0A1628" />
       </svg>
     </div>
 
     <!-- ── CARDS ────────────────────────────────────── -->
     <div class="cards">
-
       <!-- Personal Info -->
       <div class="card" :class="{ loaded: isLoaded }">
         <div class="card-label">
           <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
-            <circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M3 17c0-3.314 3.134-6 7-6s7 2.686 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.5" />
+            <path
+              d="M3 17c0-3.314 3.134-6 7-6s7 2.686 7 6"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
           </svg>
           Personal Info
         </div>
         <div class="field-row">
           <span class="field-key">Full Name</span>
-          <span class="field-val">{{ userData ? `${userData.firstName} ${userData.lastName}` : '—' }}</span>
+          <span class="field-val">{{
+            userData ? `${userData.firstName} ${userData.lastName}` : '—'
+          }}</span>
         </div>
         <div class="divider" />
         <div class="field-row">
@@ -93,9 +104,22 @@
       <div class="card" :class="{ loaded: isLoaded }" style="animation-delay: 0.08s">
         <div class="card-label">
           <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
-            <rect x="3" y="3" width="14" height="14" rx="3" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            <circle cx="10" cy="7" r="1" fill="currentColor"/>
+            <rect
+              x="3"
+              y="3"
+              width="14"
+              height="14"
+              rx="3"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
+            <path
+              d="M7 10h6M7 13h4"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+            <circle cx="10" cy="7" r="1" fill="currentColor" />
           </svg>
           Contact
         </div>
@@ -114,8 +138,12 @@
       <div class="card" :class="{ loaded: isLoaded }" style="animation-delay: 0.16s">
         <div class="card-label">
           <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
-            <path d="M10 2a6 6 0 016 6c0 4-6 10-6 10S4 12 4 8a6 6 0 016-6z" stroke="currentColor" stroke-width="1.5"/>
-            <circle cx="10" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+            <path
+              d="M10 2a6 6 0 016 6c0 4-6 10-6 10S4 12 4 8a6 6 0 016-6z"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
+            <circle cx="10" cy="8" r="2" stroke="currentColor" stroke-width="1.5" />
           </svg>
           Location
         </div>
@@ -138,12 +166,22 @@
       <!-- Log Out -->
       <button class="logout-btn" @click="logOut" :disabled="isLoggingOut">
         <svg v-if="!isLoggingOut" viewBox="0 0 20 20" fill="none" width="17" height="17">
-          <path d="M13 15l4-4-4-4M17 11H8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M8 17H5a2 2 0 01-2-2V5a2 2 0 012-2h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path
+            d="M13 15l4-4-4-4M17 11H8"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M8 17H5a2 2 0 01-2-2V5a2 2 0 012-2h3"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
         </svg>
         <span>{{ isLoggingOut ? 'Logging out…' : 'Log Out' }}</span>
       </button>
-
     </div>
 
     <!-- Camera Component -->
@@ -152,74 +190,104 @@
       @close="isCameraOpen = false"
       @captured="onPhotoCaptured"
     />
-
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { logOutUser, getUserData, type UserData } from 'src/firebase/authService'
-import { listenToCreditPoints } from 'src/firebase/realtimeService'
-import { auth } from 'src/firebase/firebase'
-import CameraFaceCapture from 'src/components/CameraFaceCapture.vue'
-import type { Unsubscribe } from 'firebase/database'
+import { ref, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { logOutUser, getUserData, type UserData } from 'src/firebase/authService';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from 'src/firebase/firebase';
+import { update, ref as dbRef } from 'firebase/database';
+import { rtdb } from 'src/firebase/firebase';
+import { listenToCreditPoints } from 'src/firebase/realtimeService';
+import { auth } from 'src/firebase/firebase';
+import CameraFaceCapture from 'src/components/CameraFaceCapture.vue';
+import type { Unsubscribe } from 'firebase/database';
 
-const router = useRouter()
-const userData = ref<UserData | null>(null)
-const creditPoints = ref(0)
-const isLoggingOut = ref(false)
-const isCameraOpen = ref(false)
-const isLoaded = ref(false)
+const router = useRouter();
+const userData = ref<UserData | null>(null);
+const creditPoints = ref(0);
+const isLoggingOut = ref(false);
+const isCameraOpen = ref(false);
+const isLoaded = ref(false);
 
-let unsubCredits: Unsubscribe | null = null
+let unsubCredits: Unsubscribe | null = null;
 
 onMounted(async () => {
-  const user = auth.currentUser
-  if (!user) return
-  userData.value = await getUserData(user.uid)
+  const user = auth.currentUser;
+  if (!user) return;
+  userData.value = await getUserData(user.uid);
   unsubCredits = listenToCreditPoints(user.uid, (val) => {
-    creditPoints.value = val
-  })
+    creditPoints.value = val;
+  });
   // Trigger card animation after data loads
-  setTimeout(() => { isLoaded.value = true }, 50)
-})
+  setTimeout(() => {
+    isLoaded.value = true;
+  }, 50);
+});
 
 onUnmounted(() => {
-  if (unsubCredits) unsubCredits()
-})
+  if (unsubCredits) unsubCredits();
+});
 
 const formatBirthdate = (raw?: string): string => {
-  if (!raw) return '—'
+  if (!raw) return '—';
   try {
     return new Date(raw).toLocaleDateString('en-PH', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-    })
+    });
   } catch {
-    return raw
+    return raw;
   }
-}
+};
 
-const openCamera = () => { isCameraOpen.value = true }
+const openCamera = () => {
+  isCameraOpen.value = true;
+};
 
-const onPhotoCaptured = (url: string) => {
-  if (userData.value) userData.value.profilePictureUrl = url
-}
+const onPhotoCaptured = async (url: string) => {
+  if (!userData.value) return;
+
+  const user = auth.currentUser;
+  if (!user) return;
+
+  // Update local state immediately
+  userData.value.profilePictureUrl = url;
+
+  try {
+    // Save to Firestore
+    await updateDoc(doc(db, 'users', user.uid), {
+      profilePictureUrl: url,
+    });
+
+    // Save to Realtime Database
+    await update(dbRef(rtdb, `users/${user.uid}`), {
+      profilePictureUrl: url,
+    });
+
+    console.log('Profile picture updated successfully');
+  } catch (error) {
+    console.error('Failed to save profile picture:', error);
+    alert('Photo uploaded but failed to save. Please try again.');
+  }
+};
 
 const logOut = async () => {
-  if (isLoggingOut.value) return
-  isLoggingOut.value = true
+  if (isLoggingOut.value) return;
+  isLoggingOut.value = true;
   try {
-    await logOutUser()
-    await router.replace('/welcomeScreen')
+    await logOutUser();
+    await router.replace('/welcomeScreen');
   } catch (error) {
-    console.error('Logout error:', error)
+    console.error('Logout error:', error);
   } finally {
-    isLoggingOut.value = false
+    isLoggingOut.value = false;
   }
-}
+};
 </script>
 
 <style scoped>
@@ -230,7 +298,7 @@ const logOut = async () => {
 /* ── PAGE ──────────────────────────────────────────────── */
 .profile-page {
   min-height: 100vh;
-  background: #0A1628;
+  background: #0a1628;
   font-family: 'DM Sans', sans-serif;
   overflow-x: hidden;
   padding-bottom: 40px;
@@ -239,7 +307,7 @@ const logOut = async () => {
 /* ── HERO ──────────────────────────────────────────────── */
 .hero {
   position: relative;
-  background: linear-gradient(160deg, #0f2a50 0%, #122240 60%, #0A1628 100%);
+  background: linear-gradient(160deg, #0f2a50 0%, #122240 60%, #0a1628 100%);
   padding: 56px 24px 72px;
   display: flex;
   flex-direction: column;
@@ -286,8 +354,15 @@ const logOut = async () => {
 }
 
 @keyframes pulse-ring {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.04); }
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
 }
 
 .avatar-wrap {
@@ -295,7 +370,7 @@ const logOut = async () => {
   height: 108px;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid #00D4E8;
+  border: 3px solid #00d4e8;
   background: #1a2f52;
   display: flex;
   align-items: center;
@@ -329,8 +404,8 @@ const logOut = async () => {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: #00D4E8;
-  border: 2px solid #0A1628;
+  background: #00d4e8;
+  border: 2px solid #0a1628;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -371,8 +446,12 @@ const logOut = async () => {
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .credits-chip {
@@ -394,7 +473,7 @@ const logOut = async () => {
   font-family: 'Syne', sans-serif;
   font-size: 15px;
   font-weight: 600;
-  color: #00D4E8;
+  color: #00d4e8;
 }
 
 .credits-tag {
@@ -425,7 +504,9 @@ const logOut = async () => {
   padding: 18px 20px;
   opacity: 0;
   transform: translateY(16px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition:
+    opacity 0.4s ease,
+    transform 0.4s ease;
 }
 
 .card.loaded {
@@ -441,7 +522,7 @@ const logOut = async () => {
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #00D4E8;
+  color: #00d4e8;
   margin-bottom: 16px;
 }
 
@@ -497,8 +578,10 @@ const logOut = async () => {
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-  margin-bottom: 90px;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+  margin-bottom: 150px;
 }
 
 .logout-btn:hover:not(:disabled) {
