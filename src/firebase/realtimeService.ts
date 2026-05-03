@@ -344,7 +344,6 @@ export const finishCoinSlotPayment = async (
     },
   });
 
-
   await set(ref(rtdb, `rentalHistory/${rentalId}`), {
     userId,
     userName: renterName,
@@ -392,32 +391,9 @@ export const payWithCreditPoints = async (
 
   const now = new Date();
   const returnBy = new Date(now.getTime() + 12 * 60 * 60 * 1000);
-   const rentalId = `rental_${Date.now()}`;
+  const rentalId = `rental_${Date.now()}`;
 
-
-  // ← ADD THIS — clears all station-level payment fields
-  await update(ref(rtdb, `stations/${stationId}`), {
-    someoneWillPay: false,
-    paymentMethod: '',
-    whichSlot: '',
-    coinSlot: 0,
-    payingUserId: '',
-    espReadyPay: false,
-  });
-
-  // rest of the function unchanged...
-
-  await update(ref(rtdb, `users/${userId}`), {
-    creditPoints: currentCredits - price,
-    activeRental: {
-      stationId,
-      slotName,
-      rentedAt: now.toISOString(),
-      returnBy: returnBy.toISOString(),
-      rentalId,
-    },
-  });
-
+  // ✅ STEP 1: Slot marked rented FIRST before ESP32 exits its loop
   await update(ref(rtdb, `stations/${stationId}/${slotName}`), {
     status: 'rented',
     isPresent: false,
@@ -432,6 +408,27 @@ export const payWithCreditPoints = async (
     pendingSince: '',
   });
 
+  // ✅ STEP 2: NOW signal ESP32 that payment is done — slot is already "rented"
+  await update(ref(rtdb, `stations/${stationId}`), {
+    someoneWillPay: false,
+    paymentMethod: '',
+    whichSlot: '',
+    coinSlot: 0,
+    payingUserId: '',
+    espReadyPay: false,
+  });
+
+  // ✅ STEP 3: User update last — no race condition here
+  await update(ref(rtdb, `users/${userId}`), {
+    creditPoints: currentCredits - price,
+    activeRental: {
+      stationId,
+      slotName,
+      rentedAt: now.toISOString(),
+      returnBy: returnBy.toISOString(),
+      rentalId,
+    },
+  });
 
   await set(ref(rtdb, `rentalHistory/${rentalId}`), {
     userId,

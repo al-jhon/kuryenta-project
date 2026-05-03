@@ -1,5 +1,17 @@
 {
   "appId": "com.kuryenta.app",
-  "appName": "Kuryenta App",
-  "webDir": "www"
+  "appName": "Kuryenta",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "mediaPlaybackRequiresUserGesture": false
+  },
+  "plugins": {
+    "Camera": {
+      "presentationStyle": "fullscreen"
+    }
+  }
 }

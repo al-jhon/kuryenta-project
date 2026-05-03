@@ -56,7 +56,6 @@ import { ref, watch, onUnmounted } from 'vue';
 import * as faceapi from 'face-api.js';
 import { uploadToCloudinary } from 'src/services/cloudinaryService';
 
-// Props & Emits
 const props = defineProps<{
   isOpen: boolean;
 }>();
@@ -66,7 +65,6 @@ const emit = defineEmits<{
   (e: 'captured', url: string): void;
 }>();
 
-// Refs
 const videoRef = ref<HTMLVideoElement | null>(null);
 const captureCanvas = ref<HTMLCanvasElement | null>(null);
 
@@ -95,10 +93,8 @@ const startCamera = async (): Promise<void> => {
     isModelLoading.value = true;
     isFaceDetected.value = false;
 
-    // Load face detection model
     await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
 
-    // Access front camera
     stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: 'user',
@@ -108,7 +104,6 @@ const startCamera = async (): Promise<void> => {
       audio: false,
     });
 
-    // Wait for video element to be ready
     await new Promise<void>((resolve) => {
       const checkVideo = setInterval(() => {
         if (videoRef.value) {
@@ -121,7 +116,12 @@ const startCamera = async (): Promise<void> => {
     if (videoRef.value) {
       videoRef.value.srcObject = stream;
 
-      videoRef.value.onloadedmetadata = () => {
+      videoRef.value.onloadedmetadata = async () => {
+        try {
+          await videoRef.value?.play();
+        } catch (e) {
+          console.warn('Video play error:', e);
+        }
         isModelLoading.value = false;
         startFaceDetection();
       };
@@ -171,17 +171,14 @@ const captureAndUpload = async (): Promise<void> => {
 
     if (!ctx) return;
 
-    // Set canvas to video size
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    // Draw current frame (mirror it since front camera is mirrored)
     ctx.save();
     ctx.scale(-1, 1);
     ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
     ctx.restore();
 
-    // Crop to square (center)
     const size = Math.min(canvas.width, canvas.height);
     const offsetX = (canvas.width - size) / 2;
     const offsetY = (canvas.height - size) / 2;
@@ -195,20 +192,16 @@ const captureAndUpload = async (): Promise<void> => {
 
     croppedCtx.drawImage(canvas, offsetX, offsetY, size, size, 0, 0, 500, 500);
 
-    // Convert to blob
     const blob = await new Promise<Blob>((resolve) => {
       croppedCanvas.toBlob((b) => resolve(b!), 'image/jpeg', 0.85);
     });
 
-    // Upload to Cloudinary
     const result = await uploadToCloudinary(blob);
 
     console.log('Uploaded to Cloudinary:', result.secure_url);
 
-    // Send URL back to parent
     emit('captured', result.secure_url);
 
-    // Close camera
     closeCamera();
   } catch (error) {
     console.error('Capture/upload error:', error);
@@ -240,7 +233,6 @@ const closeCamera = (): void => {
   emit('close');
 };
 
-// Cleanup
 onUnmounted(() => {
   stopCamera();
 });
@@ -266,7 +258,6 @@ onUnmounted(() => {
   flex-direction: column;
 }
 
-/* ── HEADER ── */
 .camera-header {
   display: flex;
   align-items: center;
@@ -297,7 +288,6 @@ onUnmounted(() => {
   font-family: 'Poppins', sans-serif;
 }
 
-/* ── CAMERA VIEW ── */
 .camera-view {
   flex: 1;
   position: relative;
@@ -315,7 +305,6 @@ onUnmounted(() => {
   transform: scaleX(-1);
 }
 
-/* ── FACE GUIDE ── */
 .face-guide {
   position: absolute;
   top: 50%;
@@ -339,7 +328,6 @@ onUnmounted(() => {
   box-shadow: 0 0 30px rgba(39, 174, 96, 0.3);
 }
 
-/* ── STATUS ── */
 .status-bar {
   position: absolute;
   bottom: 20px;
@@ -363,7 +351,6 @@ onUnmounted(() => {
   color: #27ae60;
 }
 
-/* ── FOOTER ── */
 .camera-footer {
   padding: 25px;
   background-color: #111;
