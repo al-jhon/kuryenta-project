@@ -129,7 +129,11 @@
       <div class="modal-card">
         <!-- BEFORE: <h3>Preparing Coin Slot</h3> -->
         <h3>
-          {{ pendingPaymentMethod === 'creditPoints' ? 'Preparing Slot' : 'Preparing Coin Slot' }}
+          {{
+            pendingPaymentMethod === 'creditPoints'
+              ? 'Preparing Credit Points Payment'
+              : 'Preparing Coin Slot'
+          }}
         </h3>
         <div class="esp-loading-wrapper">
           <div class="esp-spinner"></div>
@@ -137,7 +141,7 @@
           <p class="esp-loading-text">
             {{
               pendingPaymentMethod === 'creditPoints'
-                ? 'Station is unlocking your slot...'
+                ? 'Station is preparing for credit points payment...'
                 : 'Station is getting ready to accept coins...'
             }}
           </p>
